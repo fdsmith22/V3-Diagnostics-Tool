@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>V3 Diagnostics Tool</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <style>
+    body {
+      background-color: #f8f9fa;
+    }
+    .output-box {
+      white-space: pre-wrap;
+      font-family: monospace;
+    }
+    .connected-btn {
+      width: 150px;
+      height: 50px;
+    }
+  </style>
+</head>
+<body class="p-4">
+  <div class="container">
+    <h1 class="mb-4">V3 Diagnostics Tool</h1>
+
+    <!-- Status Banner -->
+    <div class="mb-4">
+      <div id="statusBanner" class="p-3 rounded text-white text-center" style="background-color: #0d6efd;">
+        🟦 Ready to run diagnostics
+      </div>
+    </div>
+
+    <!-- Device Connection Status -->
+    <div class="mb-4">
+      <button id="connectionStatus" class="btn btn-danger connected-btn" onclick="checkDeviceConnection()">Disconnected</button>
+    </div>
+
+    <!-- Camera Status -->
+    <div id="cameraStatus" class="alert alert-info d-none" role="alert">
+      <strong>Camera Status:</strong> <span id="cameraChecked">Checked: 0</span> | <span id="cameraFound">Found: 0</span>
+    </div>
+
+    <!-- Stack Identity Info -->
+    <div class="mb-4">
+      <div class="card">
+        <div class="card-body">
+          <strong>Connected Stack Info:</strong><br>
+          <div><strong>HWID:</strong> <span id="hwid">—</span></div>
+          <div><strong>IP Address:</strong> <span id="ip">—</span></div>
+          <div><strong>Uptime:</strong> <span id="uptime">—</span></div>
+          <div><strong>MAC Address:</strong> <span id="macAddress">—</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Issue Log -->
+    <div id="issueLog" class="alert alert-warning d-none" role="alert">
+      <strong>Issues detected:</strong>
+      <ul id="issueList" class="mb-0"></ul>
+    </div>
+
+    <!-- Run All Button -->
+    <div class="mb-3">
+      <button class="btn btn-success me-2" onclick="runTest('full_diagnostics')">Run Full System Diagnostic</button>
+    </div>
+
+    <!-- Toggle Individual Tests -->
+    <div class="mb-4">
+      <h5>
+        <a class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" href="#advancedTests" role="button" aria-expanded="false" aria-controls="advancedTests">
+          Show/Hide Individual Tests
+        </a>
+      </h5>
+      <div class="collapse" id="advancedTests">
+        <div class="card card-body">
+          <button class="btn btn-secondary me-2 mb-2" onclick="runTest('check_power')">Check Power</button>
+          <button class="btn btn-secondary me-2 mb-2" onclick="runTest('check_network')">Check Network</button>
+          <button class="btn btn-secondary me-2 mb-2" onclick="runTest('check_sim')">Check SIM</button>
+          <button class="btn btn-secondary me-2 mb-2" onclick="runTest('check_logs')">System Logs</button>
+          <button class="btn btn-secondary me-2 mb-2" onclick="runTest('check_system')">System Info</button>
+          <button class="btn btn-secondary me-2 mb-2" onclick="runTest('check_storage')">Disk Usage</button>
+          <button class="btn btn-secondary me-2 mb-2" onclick="runTest('check_memory')">Memory Usage</button>
+          <button class="btn btn-secondary me-2 mb-2" onclick="runTest('check_interfaces')">Network Interfaces</button>
+          <button class="btn btn-secondary me-2 mb-2" onclick="runTest('check_modem')">Modem/SIM</button>
+          <button class="btn btn-secondary me-2 mb-2" onclick="runTest('check_i2c')">I2C Devices</button>
+          <button class="btn btn-secondary me-2 mb-2" onclick="runTest('check_usb')">USB Devices</button>
+          <button class="btn btn-secondary me-2 mb-2" onclick="runTest('check_camera')">Camera Devices</button>
+          <button class="btn btn-secondary me-2 mb-2" onclick="runTest('check_thermals')">Thermal Sensors</button>
+          <button class="btn btn-secondary me-2 mb-2" onclick="runTest('check_cpuinfo')">CPU Info</button>
+          <button class="btn btn-secondary me-2 mb-2" onclick="runTest('check_memory_extended')">Memory Details</button>
+          <button class="btn btn-secondary me-2 mb-2" onclick="runTest('check_disk_health')">Disk Health</button>
+          <button class="btn btn-secondary me-2 mb-2" onclick="runTest('check_dmesg_critical')">Kernel Logs</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Output Panel -->
+    <div>
+      <h5>Test Output</h5>
+      <div id="output" class="output-box p-3 border bg-white rounded" style="min-height: 200px;"></div>
+    </div>
+  </div>
+
+<script>
+  let isDeviceConnected = false; // Track device connection status
+  let connectionTimeout;  // Timeout variable to check for device reachability
+  let checkConnectionInterval;  // Interval for periodic connection checks
+
+  // Check device connection (ping the stack or check device reachability)
+  function checkDeviceConnection() {
+    // Example ping to test device connectivity
+    $.ajax({
+      url: '/ping', // Assuming you have a server route to handle ping requests
+      timeout: 5000, // Set timeout to 5 seconds
+      success: function(response) {
+        isDeviceConnected = true;
+        updateConnectionDisplay(true); // Update UI to show "Connected"
+        updateStatusBanner("ready"); // Set banner to "Ready"
+      },
+      error: function() {
+        isDeviceConnected = false;
+        updateConnectionDisplay(false); // Update UI to show "Disconnected"
+        updateStatusBanner("error"); // Set banner to "Error"
+      }
+    });
+  }
+
+  // Function to update the connection display and banner
+  function updateConnectionDisplay(connected) {
+    if (connected) {
+      $('#connectionStatus').removeClass('btn-danger').addClass('btn-success').text('Connected');
+    } else {
+      $('#connectionStatus').removeClass('btn-success').addClass('btn-danger').text('Disconnected');
+    }
+  }
+
+  // Function to update the status banner
+  function updateStatusBanner(state) {
+    const banner = document.getElementById("statusBanner");
+    if (state === "ready") {
+      banner.style.backgroundColor = "#0d6efd"; // Blue
+      banner.textContent = "🟦 Ready to run diagnostics";
+    } else if (state === "running") {
+      banner.style.backgroundColor = "#ffc107"; // Yellow
+      banner.textContent = "🟧 Diagnostics in progress...";
+    } else if (state === "success") {
+      banner.style.backgroundColor = "#198754"; // Green
+      banner.textContent = "🟩 Diagnostics complete";
+    } else if (state === "error") {
+      banner.style.backgroundColor = "#dc3545"; // Red
+      banner.textContent = "🟥 Error - Check Connection";
+    }
+  }
+
+  function runTest(testName) {
+    // Before running diagnostics, ensure the device is reachable
+    if (!isDeviceConnected) {
+      updateStatusBanner("error");
+      $('#output').text("❌ Device not reachable.");
+      return;
+    }
+
+    // 🧹 Reset UI components
+    updateStatusBanner("running");
+    $('#output').text("Running test: " + testName + "...");
+    $('#issueList').empty();                      // Clear issue log list
+    $('#issueLog').addClass('d-none');           // Hide issue log until needed
+
+    // Set timeout for test execution to avoid hanging
+    const timeout = setTimeout(function () {
+      $('#output').text("❌ Test timed out.");
+      updateStatusBanner("error");
+    }, 60000); // Timeout after 60 seconds
+
+    const route = testName === 'full_diagnostics' ? '/run_full_diagnostics' : '/run_test/' + testName;
+
+    $.get(route, function (response) {
+      clearTimeout(timeout);
+      if (response.status === 'success') {
+        $('#output').text(response.output);
+        updateStatusBanner("success");
+        analyzeOutputForIssues(response); // ✅ Full response passed
+
+        document.getElementById("hwid").textContent = response.hwid;
+        document.getElementById("ip").textContent = response.ip;
+        document.getElementById("uptime").textContent = response.uptime;
+        document.getElementById("macAddress").textContent = response.macAddress;
+      } else {
+        $('#output').text("❌ " + response.output);
+        updateStatusBanner("error");
+      }
+    }).fail(function () {
+      clearTimeout(timeout);
+      $('#output').text("❌ Error during test execution.");
+      updateStatusBanner("error");
+    });
+  }
+
+
+  function analyzeOutputForIssues(response) {
+    const output = response.output || "";
+    const issues = [];
+
+    // Pattern-based checks
+    if (/SIM.*not detected|No SIM/i.test(output)) issues.push("❌ SIM card not detected");
+    if (/No modems were found|ModemManager.*not running/i.test(output)) issues.push("❌ Modem not found or service down");
+    if (/Cannot open device \/dev\/video0/i.test(output)) issues.push("❌ Camera not detected");
+    if (/temperature.*([7-9]\d|[1-9]\d{2,})/i.test(output)) issues.push("🔥 High temperature reading detected");
+
+    // Improved CPU idle usage check
+    const cpuMatch = output.match(/%Cpu\(s\):.*?(\d+\.\d+)\s*id/);
+    if (cpuMatch) {
+      const idlePercent = parseFloat(cpuMatch[1]);
+      if (idlePercent < 60) {
+        issues.push(`⚠️ High CPU usage detected (Idle: ${idlePercent.toFixed(1)}%)`);
+      }
+    } else {
+      issues.push("⚠️ Unable to determine CPU usage.");
+    }
+
+    // System-level access issues
+    if (/No journal files.*permissions|dmesg: read kernel buffer failed/i.test(output)) {
+      issues.push("⚠️ Log access denied or restricted");
+    }
+
+    // Generic error detection
+    if (/error|failed|not found/i.test(output) && !output.includes("✅")) {
+      issues.push("⚠️ One or more components returned errors");
+    }
+
+    const issueLog = document.getElementById("issueLog");
+    const issueList = document.getElementById("issueList");
+    issueList.innerHTML = "";
+
+    // ✅ Add camera summary only — and only once
+    if (Array.isArray(response.cameraDetails) && response.cameraDetails.length > 0) {
+      response.cameraDetails.forEach(detail => {
+        const li = document.createElement("li");
+        li.textContent = "✅ " + detail;
+        issueList.appendChild(li);
+      });
+    } else {
+      const li = document.createElement("li");
+      li.textContent = "❌ No IMX462 cameras detected.";
+      issueList.appendChild(li);
+    }
+
+    // Append diagnostic issues
+    issues.forEach(issue => {
+      const li = document.createElement("li");
+      li.textContent = issue;
+      issueList.appendChild(li);
+    });
+
+    // Always show the issue log
+    issueLog.classList.remove("d-none");
+  }
+
+
+  document.addEventListener("DOMContentLoaded", () => {
+    checkDeviceConnection();
+    setInterval(checkDeviceConnection, 20000);
+
+    if (isDeviceConnected) {
+      updateStatusBanner("ready");
+    } else {
+      updateStatusBanner("error");
+    }
+  });
+</script>
+</body>
+</html>

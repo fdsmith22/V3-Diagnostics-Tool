@@ -2,6 +2,9 @@
 
 A lightweight, local web diagnostic interface for V3 sensor modules. Designed to quickly test returned units over USB connection.
 
+SSH passwords not included for security- must be added manually in .env file.
+Once complete this will enable passwordless debugging via USB.
+
 ## Features
 
 - Power supply rail check

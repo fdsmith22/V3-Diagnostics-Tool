@@ -1,13 +1,20 @@
 # V3 Diagnostics Tool
 
-A lightweight, local web diagnostic interface for V3 sensor modules. Designed for field technicians to quickly test returned units using USB connection.
+A lightweight, local web diagnostic interface for V3 sensor modules. Designed to quickly test returned units over USB connection.
 
 ## Features
 
 - Power supply rail check
 - Network manager status
 - SIM presence and signal
+- Modem presence and connection
+- IMX Camera Device check and physical port verifcation 
 - Condensed error log
+- Core Memory logs
+- GPU + CPU usage display
+- Stack Disk Health check
+- Zoned Temperature Readout per sensor
+- 
 - Summary dashboard
 
 ## Usage

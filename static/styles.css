@@ -1,0 +1,115 @@
+/* === Global Theme === */
+body {
+  background-color: #f8f9fa;
+  font-family: 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.6;
+}
+
+/* === Terminal Container Styling === */
+#terminal-container {
+  height: 500px;
+  background-color: #111; /* soft black */
+  border-radius: 8px;
+  padding: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+  font-family: monospace;
+  position: relative;
+  border: 1px solid #222;
+}
+
+#terminal-container::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  box-shadow: 0 0 15px rgba(0, 255, 100, 0.05);
+  pointer-events: none;
+}
+
+/* === Scrollbar Styling === */
+#terminal-container ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+#terminal-container ::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 4px;
+}
+
+#terminal-container ::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
+
+/* === Sidebar Cards === */
+.command-sidebar .card {
+  background-color: #1e1e1e;
+  border: 1px solid #333;
+  color: #ddd;
+}
+
+.command-sidebar .card-header {
+  border-bottom: 1px solid #444;
+  font-weight: 600;
+}
+
+/* === Sidebar Buttons (Hover Effects) === */
+button.btn-outline-info,
+button.btn-outline-primary,
+button.btn-outline-warning {
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+button.btn-outline-info:hover {
+  background-color: #0dcaf0;
+  color: #fff;
+}
+
+button.btn-outline-primary:hover {
+  background-color: #0d6efd;
+  color: #fff;
+}
+
+button.btn-outline-warning:hover {
+  background-color: #ffc107;
+  color: #000;
+}
+
+/* === Diagnostics Output === */
+.output-box {
+  white-space: pre-wrap;
+  font-family: monospace;
+  background-color: #fff;
+  border: 1px solid #ccc;
+}
+
+/* === Connection Status Button === */
+.connected-btn {
+  width: 150px;
+  height: 50px;
+  font-weight: 600;
+}
+
+/* === Utility Classes === */
+.text-monospace {
+  font-family: monospace;
+}
+
+.rounded-soft {
+  border-radius: 10px !important;
+}
+
+.shadow-deep {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+}
+
+.navbar .nav-link {
+  transition: background-color 0.2s ease, color 0.2s ease;
+  border-radius: 6px;
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+.navbar .nav-link.active {
+  background-color: rgba(255, 255, 255, 0.1);
+}

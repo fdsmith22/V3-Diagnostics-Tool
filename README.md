@@ -34,5 +34,4 @@ A lightweight, local web diagnostic interface for V3 sensor modules. Designed fo
 
 - Python 3.7+
 - Flask
-- pyserial (if using serial interface)
 

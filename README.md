@@ -1,7 +1,8 @@
-# V3 Diagnostics Tool
+# V3 Diagnostics Tool 
+Version 1.2
 
 A lightweight, local web diagnostic interface for V3 sensor modules.  
-Designed to quickly test returned units over USB connection.
+Can be used to probe and interact with a stack, save a text file report locally or to quickly test returned hardware via USB SSH connection.
 
 ⚠️ SSH passwords are not included for security. You must manually create a `.env` file with credentials to enable passwordless debugging over USB.
 
@@ -47,8 +48,8 @@ If `requirements.txt` is missing, install manually:
 
 Add your SSH credentials:
 
-    SSH_USERNAME=your_username
-    SSH_PASSWORD=your_password
+    SSH_USERNAME=the_usual_user
+    SSH_PASSWORD=the_password
 
 Ensure `python-dotenv` is installed:
 
@@ -72,5 +73,6 @@ Then open your browser and go to:
 
 - Python 3.7+
 - Flask
+- FlasksocketIO
 - python-dotenv (for .env support)
 - sshpass (for passwordless SSH over USB)

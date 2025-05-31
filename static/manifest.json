@@ -1,0 +1,9 @@
+{
+  "name": "V3 Diagnostics Terminal",
+  "short_name": "V3 Terminal",
+  "description": "Interactive terminal for V3 Diagnostics",
+  "start_url": "/terminal",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0d6efd"
+}

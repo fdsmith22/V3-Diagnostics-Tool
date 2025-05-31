@@ -1,105 +1,710 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Interactive Terminal</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="V3 Diagnostics Terminal - SSH Access to connected devices">
+    <meta name="theme-color" content="#0d6efd">
+    <title>V3 Diagnostics | Interactive Terminal</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Add reference to our custom css file -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/terminal.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="icon" type="image/svg+xml"
+          href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%230d6efd' viewBox='0 0 16 16'%3E%3Cpath d='M5 0a.5.5 0 0 1 .5.5V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 1 0V2A2.5 2.5 0 0 1 14 4.5h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14a2.5 2.5 0 0 1-2.5 2.5v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14A2.5 2.5 0 0 1 2 11.5H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2A2.5 2.5 0 0 1 4.5 2V.5A.5.5 0 0 1 5 0m-.5 3A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13h7a1.5 1.5 0 0 0 1.5-1.5v-7A1.5 1.5 0 0 0 11.5 3z'/%3E%3C/svg%3E">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
 </head>
-
 <body>
-  <div class="container-fluid py-4">
-    {% include 'navbar.html' %}
-
-    <div class="row">
-      <!-- Sidebar with grouped command presets -->
-      <div class="col-md-3 command-sidebar">
-        <h5 class="mb-3">Quick Commands</h5>
-
-        <!-- Network -->
-        <div class="card mb-3">
-          <div class="card-header bg-primary text-white">🌐 Network</div>
-          <div class="card-body d-grid gap-2">
-            <button class="btn btn-outline-primary" onclick="injectCommand('nmcli c up stream')">nmcli c up stream</button>
-            <button class="btn btn-outline-primary" onclick="injectCommand('ifconfig | grep 192')">Show IP</button>
-          </div>
+<!-- Accessibility Skip Link -->
+<a href="#terminal-main" class="skip-to-content">Skip to terminal</a>
+{% include 'navbar.html' %}
+<div class="container-fluid page-transition" id="terminal-main">
+    <div class="row my-3">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h1 class="h3 mb-0 d-flex align-items-center">
+                        <i class="bi bi-terminal-fill me-3 text-primary"></i>Interactive Terminal
+                    </h1>
+                    <p class="text-muted mb-0">Secure shell access to connected device</p>
+                </div>
+                <div>
+            <span id="connectionStatusBadge" class="badge rounded-pill shadow-sm"
+                  style="background-color: var(--accent-red-light); color: var(--accent-red);">
+              <i class="bi bi-ethernet-disconnect me-1"></i>
+              <span>Disconnected</span>
+            </span>
+                </div>
+            </div>
         </div>
-
-        <!-- Modem -->
-        <div class="card mb-3">
-          <div class="card-header bg-info text-white">📡 Modem</div>
-          <div class="card-body d-grid gap-2">
-            <button class="btn btn-outline-info" onclick="injectCommand('sudo mmcli -m 0')">mmcli -m 0</button>
-            <button class="btn btn-outline-info" onclick="injectCommand('sudo mmcli -m 0 --signal-get')">Get Signal</button>
-          </div>
-        </div>
-
-        <!-- System -->
-        <div class="card mb-3">
-          <div class="card-header bg-warning text-dark">🖥️ System</div>
-          <div class="card-body d-grid gap-2">
-            <button class="btn btn-outline-warning" onclick="injectCommand('sudo reboot')">Reboot</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Terminal display -->
-      <div class="col-md-9">
-        <h3 class="mb-3">Interactive Stack Terminal</h3>
-        <div id="terminal-container" class="mb-3"></div>
-      </div>
     </div>
-  </div>
+    <!-- Main Content Row -->
+    <div class="row">
+        <!-- Command Categories Sidebar -->
+        <div class="col-lg-3 mb-4">
+            <!-- Command Categories Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-terminal-plus me-2"></i>Command Categories</span>
+                    <button class="btn btn-sm btn-outline-secondary"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#commandCategoriesCardBody"
+                            aria-expanded="true"
+                            aria-controls="commandCategoriesCardBody"
+                            onclick="toggleCategoriesIcon(this)">
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                </div>
+                <div class="collapse show" id="commandCategoriesCardBody">
+                    <div class="card-body p-0">
+                        <ul class="nav nav-tabs px-3 pt-2" id="commandTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="network-tab" data-bs-toggle="tab"
+                                        data-bs-target="#network-commands" type="button" role="tab"
+                                        aria-controls="network-commands" aria-selected="true">
+                                    <i class="bi bi-wifi me-1"></i>Network
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="system-tab" data-bs-toggle="tab"
+                                        data-bs-target="#system-commands" type="button" role="tab"
+                                        aria-controls="system-commands" aria-selected="false">
+                                    <i class="bi bi-cpu me-1"></i>System
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="modem-tab" data-bs-toggle="tab"
+                                        data-bs-target="#modem-commands" type="button" role="tab"
+                                        aria-controls="modem-commands" aria-selected="false">
+                                    <i class="bi bi-broadcast me-1"></i>Modem
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="camera-tab" data-bs-toggle="tab"
+                                        data-bs-target="#camera-commands" type="button" role="tab"
+                                        aria-controls="camera-commands" aria-selected="false">
+                                    <i class="bi bi-camera me-1"></i>Camera
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="diagnostic-tab" data-bs-toggle="tab"
+                                        data-bs-target="#diagnostic-commands" type="button" role="tab"
+                                        aria-controls="diagnostic-commands" aria-selected="false">
+                                    <i class="bi bi-activity me-1"></i>Diagnostic
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="vivacity-tab" data-bs-toggle="tab"
+                                        data-bs-target="#vivacity-commands" type="button" role="tab"
+                                        aria-controls="vivacity-commands" aria-selected="false">
+                                    <i class="bi bi-eye me-1"></i>Vivacity
+                                </button>
+                            </li>
+                        </ul>
+                        <div class="tab-content p-3" id="commandTabContent">
+                            <!-- Network Commands Tab -->
+                            <div class="tab-pane fade show active" id="network-commands" role="tabpanel"
+                                 aria-labelledby="network-tab">
+                                <div class="row row-cols-1 row-cols-md-2 g-2">
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-primary"
+                                                onclick="injectCommand('ifconfig')">
+                                            <small class="d-block text-muted">Interface Config</small>
+                                            ifconfig
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-primary"
+                                                onclick="injectCommand('ip addr show')">
+                                            <small class="d-block text-muted">IP Addresses</small>
+                                            ip addr show
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-primary"
+                                                onclick="injectCommand('nmcli c show')">
+                                            <small class="d-block text-muted">Network Connections</small>
+                                            nmcli c show
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-success"
+                                                onclick="injectCommand('nmcli c up stream')">
+                                            <small class="d-block text-muted">Enable Stream Interface</small>
+                                            nmcli c up stream
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-primary"
+                                                onclick="injectCommand('netstat -tuln')">
+                                            <small class="d-block text-muted">Open Ports</small>
+                                            netstat -tuln
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-primary"
+                                                onclick="injectCommand('ping -c 4 8.8.8.8')">
+                                            <small class="d-block text-muted">Test Internet</small>
+                                            ping -c 4 8.8.8.8
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-primary"
+                                                onclick="injectCommand('traceroute 1.1.1.1')">
+                                            <small class="d-block text-muted">Trace Route</small>
+                                            traceroute 1.1.1.1
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-primary"
+                                                onclick="injectCommand('iwconfig')">
+                                            <small class="d-block text-muted">Wireless Info</small>
+                                            iwconfig
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-secondary"
+                                                onclick="injectCommand('ss -tunap')">
+                                            <small class="d-block text-muted">Socket Statistics</small>
+                                            ss -tunap
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-secondary"
+                                                onclick="injectCommand('ip route')">
+                                            <small class="d-block text-muted">Routing Table</small>
+                                            ip route
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-primary"
+                                                onclick="injectCommand('nmcli d wifi')">
+                                            <small class="d-block text-muted">List WiFi Networks</small>
+                                            nmcli d wifi
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-success"
+                                                onclick="injectCommand('sudo nmcli c up belkin.070')">
+                                            <small class="d-block text-muted">Connect to Belkin</small>
+                                            sudo nmcli c up belkin.070
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-warning"
+                                                onclick="injectCommand('sudo cat /etc/NetworkManager/system-connections/belkin.070')">
+                                            <small class="d-block text-muted">Show Belkin Config</small>
+                                            sudo cat /etc/NetworkManager/system-connections/belkin.070
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-warning"
+                                                onclick="injectCommand('sudo nmcli d wifi connect belkin.070')">
+                                            <small class="d-block text-muted">Connect to WiFi</small>
+                                            sudo nmcli d wifi connect belkin.070
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- System Commands Tab -->
+                            <div class="tab-pane fade" id="system-commands" role="tabpanel"
+                                 aria-labelledby="system-tab">
+                                <div class="row row-cols-1 row-cols-md-2 g-2">
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-primary"
+                                                onclick="injectCommand('top')">
+                                            <small class="d-block text-muted">System Monitor</small>
+                                            top
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-primary"
+                                                onclick="injectCommand('htop')">
+                                            <small class="d-block text-muted">Enhanced System Monitor</small>
+                                            htop
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-primary"
+                                                onclick="injectCommand('df -h')">
+                                            <small class="d-block text-muted">Disk Usage</small>
+                                            df -h
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-primary"
+                                                onclick="injectCommand('free -h')">
+                                            <small class="d-block text-muted">Memory Usage</small>
+                                            free -h
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-primary"
+                                                onclick="injectCommand('ps aux')">
+                                            <small class="d-block text-muted">Process List</small>
+                                            ps aux
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-primary"
+                                                onclick="injectCommand('uname -a')">
+                                            <small class="d-block text-muted">System Info</small>
+                                            uname -a
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-primary"
+                                                onclick="injectCommand('uptime')">
+                                            <small class="d-block text-muted">System Uptime</small>
+                                            uptime
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-warning"
+                                                onclick="injectCommand('sudo systemctl status restart_lt')">
+                                            <small class="d-block text-muted">Restart LT Status</small>
+                                            sudo systemctl status restart_lt
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-warning"
+                                                onclick="injectCommand('sudo systemctl restart restart_lt')">
+                                            <small class="d-block text-muted">Restart LT Service</small>
+                                            sudo systemctl restart restart_lt
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-primary"
+                                                onclick="injectCommand('dmesg')">
+                                            <small class="d-block text-muted">Kernel Messages</small>
+                                            dmesg
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Modem Commands Tab -->
+                            <div class="tab-pane fade" id="modem-commands" role="tabpanel" aria-labelledby="modem-tab">
+                                <div class="row row-cols-1 row-cols-md-2 g-2">
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-primary"
+                                                onclick="injectCommand('mmcli -L')">
+                                            <small class="d-block text-muted">List Modems</small>
+                                            mmcli -L
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-primary"
+                                                onclick="injectCommand('mmcli -m 0')">
+                                            <small class="d-block text-muted">Modem Info</small>
+                                            mmcli -m 0
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-primary"
+                                                onclick="injectCommand('mmcli -m 0 --signal-get')">
+                                            <small class="d-block text-muted">Signal Strength</small>
+                                            mmcli -m 0 --signal-get
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-primary"
+                                                onclick="injectCommand('mmcli -m 0 --signal-setup=5')">
+                                            <small class="d-block text-muted">Enable Signal Reports</small>
+                                            mmcli -m 0 --signal-setup=5
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-primary"
+                                                onclick="injectCommand('mmcli -m 0 --location-get')">
+                                            <small class="d-block text-muted">Get Location</small>
+                                            mmcli -m 0 --location-get
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-warning"
+                                                onclick="injectCommand('sudo mmcli -m 0 --reset')">
+                                            <small class="d-block text-muted">Reset Modem</small>
+                                            sudo mmcli -m 0 --reset
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-primary"
+                                                onclick="injectCommand('mmcli -m 0 --bearer-list')">
+                                            <small class="d-block text-muted">List Bearers</small>
+                                            mmcli -m 0 --bearer-list
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-primary"
+                                                onclick="injectCommand('mmcli -m 0 --sim-list')">
+                                            <small class="d-block text-muted">SIM Info</small>
+                                            mmcli -m 0 --sim-list
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Camera Commands Tab -->
+                            <div class="tab-pane fade" id="camera-commands" role="tabpanel"
+                                 aria-labelledby="camera-tab">
+                                <div class="row row-cols-1 row-cols-md-2 g-2">
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-primary"
+                                                onclick="injectCommand('v4l2-ctl --list-devices')">
+                                            <small class="d-block text-muted">List Cameras</small>
+                                            v4l2-ctl --list-devices
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-primary"
+                                                onclick="injectCommand('v4l2-ctl -d /dev/video0 --all')">
+                                            <small class="d-block text-muted">Camera Info</small>
+                                            v4l2-ctl -d /dev/video0 --all
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-primary"
+                                                onclick="injectCommand('v4l2-ctl -d /dev/video0 --list-formats-ext')">
+                                            <small class="d-block text-muted">Supported Formats</small>
+                                            v4l2-ctl -d /dev/video0 --list-formats-ext
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-warning"
+                                                onclick="injectCommand('sudo systemctl restart vision_pipeline')">
+                                            <small class="d-block text-muted">Restart Vision Pipeline</small>
+                                            sudo systemctl restart vision_pipeline
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-primary"
+                                                onclick="injectCommand('v4l2-ctl -d /dev/video0 --set-ctrl=brightness=128')">
+                                            <small class="d-block text-muted">Set Brightness</small>
+                                            v4l2-ctl -d /dev/video0 --set-ctrl=brightness=128
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-primary"
+                                                onclick="injectCommand('v4l2-ctl -d /dev/video0 --set-ctrl=contrast=128')">
+                                            <small class="d-block text-muted">Set Contrast</small>
+                                            v4l2-ctl -d /dev/video0 --set-ctrl=contrast=128
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Diagnostic Commands Tab -->
+                            <div class="tab-pane fade" id="diagnostic-commands" role="tabpanel"
+                                 aria-labelledby="diagnostic-tab">
+                                <div class="row row-cols-1 row-cols-md-2 g-2">
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-primary"
+                                                onclick="injectCommand('dmesg | tail -n 50')">
+                                            <small class="d-block text-muted">Recent Kernel Logs</small>
+                                            dmesg | tail -n 50
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-primary"
+                                                onclick="injectCommand('journalctl -n 50')">
+                                            <small class="d-block text-muted">System Logs</small>
+                                            journalctl -n 50
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-warning"
+                                                onclick="injectCommand('sudo journalctl -u vision_pipeline -f')">
+                                            <small class="d-block text-muted">Vision Pipeline Logs</small>
+                                            sudo journalctl -u vision_pipeline -f
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-primary"
+                                                onclick="injectCommand('lsusb')">
+                                            <small class="d-block text-muted">USB Devices</small>
+                                            lsusb
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-primary"
+                                                onclick="injectCommand('lspci')">
+                                            <small class="d-block text-muted">PCI Devices</small>
+                                            lspci
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-primary"
+                                                onclick="injectCommand('sensors')">
+                                            <small class="d-block text-muted">Temperature Sensors</small>
+                                            sensors
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-primary"
+                                                onclick="injectCommand('iostat')">
+                                            <small class="d-block text-muted">IO Statistics</small>
+                                            iostat
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-primary"
+                                                onclick="injectCommand('vmstat')">
+                                            <small class="d-block text-muted">VM Statistics</small>
+                                            vmstat
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Vivacity Commands Tab -->
+                            <div class="tab-pane fade" id="vivacity-commands" role="tabpanel"
+                                 aria-labelledby="vivacity-tab">
+                                <div class="row row-cols-1 row-cols-md-2 g-2">
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-warning"
+                                                onclick="injectCommand('sudo journalctl -u vision_pipeline -f')">
+                                            <small class="d-block text-muted">Monitor Vision Pipeline</small>
+                                            sudo journalctl -u vision_pipeline -f
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-warning"
+                                                onclick="injectCommand('sudo systemctl restart vision_pipeline')">
+                                            <small class="d-block text-muted">Restart Vision Pipeline</small>
+                                            sudo systemctl restart vision_pipeline
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-primary"
+                                                onclick="injectCommand('nmcli d wifi')">
+                                            <small class="d-block text-muted">List WiFi Networks</small>
+                                            nmcli d wifi
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-warning"
+                                                onclick="injectCommand('sudo cat /etc/NetworkManager/system-connections/belkin.070')">
+                                            <small class="d-block text-muted">Show Belkin Config</small>
+                                            sudo cat /etc/NetworkManager/system-connections/belkin.070
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-success"
+                                                onclick="injectCommand('sudo nmcli c up belkin.070')">
+                                            <small class="d-block text-muted">Connect to Belkin</small>
+                                            sudo nmcli c up belkin.070
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-warning"
+                                                onclick="injectCommand('sudo nmcli d wifi connect belkin.070')">
+                                            <small class="d-block text-muted">Connect to WiFi</small>
+                                            sudo nmcli d wifi connect belkin.070
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-success"
+                                                onclick="injectCommand('sudo nmcli c up stream')">
+                                            <small class="d-block text-muted">Enable Stream Interface</small>
+                                            sudo nmcli c up stream
+                                        </button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn w-100 text-start command-btn cmd-warning"
+                                                onclick="injectCommand('sudo systemctl status restart_lte')">
+                                            <small class="d-block text-muted">Restart LTE Status</small>
+                                            sudo systemctl status restart_lte
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Custom Commands Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-bookmark-plus me-2"></i>Custom Commands</span>
+                    <button class="btn btn-sm btn-outline-secondary"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#customCommandsCardBody"
+                            aria-expanded="true"
+                            aria-controls="customCommandsCardBody">
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                </div>
+                <div class="collapse show" id="customCommandsCardBody">
+                    <div class="card-body">
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" id="customCommand"
+                                   placeholder="Enter custom command"
+                                   onkeydown="if(event.key === 'Enter') addCustomCommand()">
+                            <button class="btn btn-outline-primary" type="button"
+                                    onclick="addCustomCommand()">
+                                <i class="bi bi-plus"></i> Add
+                            </button>
+                        </div>
+                        <div id="customCommandsContainer">
+                            <!-- Custom commands will be populated here by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Command History Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-clock-history me-2"></i>Command History</span>
+                    <div>
+                        <button class="btn btn-sm btn-outline-secondary me-1" onclick="saveHistoryToFile()"
+                                title="Save history to file">
+                            <i class="bi bi-download"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger me-1" onclick="clearHistory()"
+                                title="Clear history">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#commandHistoryCardBody"
+                                aria-expanded="true"
+                                aria-controls="commandHistoryCardBody">
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="collapse show" id="commandHistoryCardBody">
+                    <div class="card-body p-0">
+                        <ul class="list-group list-group-flush" id="commandHistory">
+                            <!-- Command history will be populated here by JavaScript -->
+                        </ul>
+                        <div id="commandHistoryEmpty" class="text-center p-3 text-muted">
+                            <i class="bi bi-clock-history mb-2 d-block" style="font-size: 1.5rem;"></i>
+                            No command history yet
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Helpful Tips Card -->
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-lightbulb me-2"></i>Helpful Tips</span>
+                    <button class="btn btn-sm btn-outline-secondary"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#helpfulTipsCardBody"
+                            aria-expanded="true"
+                            aria-controls="helpfulTipsCardBody"
+                            onclick="toggleTipsIcon(this)">
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                </div>
+                <div class="collapse show" id="helpfulTipsCardBody">
+                    <div class="card-body">
+                        <ul class="mb-0 ps-3">
+                            <li class="mb-2">Press <kbd>Ctrl</kbd>+<kbd>C</kbd> to interrupt a running
+                                command
+                            </li>
+                            <li class="mb-2">Press <kbd>Ctrl</kbd>+<kbd>L</kbd> to clear the terminal</li>
+                            <li class="mb-2">Use arrow keys <kbd>↑</kbd> and <kbd>↓</kbd> to navigate
+                                command history
+                            </li>
+                            <li class="mb-2">Press <kbd>Ctrl</kbd>+<kbd>F</kbd> to toggle fullscreen mode
+                            </li>
+                            <li class="mb-2">Click the network status icon to see connection details</li>
+                            <li>Add commonly used commands to the Custom Commands section for quick access
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Terminal Window -->
+        <div class="col-lg-9 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <span id="terminalStatus" class="connection-status disconnected me-2">
+                          <i class="bi bi-dot me-1"></i>Disconnected
+                        </span>
+                        <span class="d-none d-sm-inline">Terminal Session</span>
+                    </div>
+                    <div class="d-flex">
+                        <div class="input-group input-group-sm me-2 command-input-container">
+                            <input type="text" class="form-control shadow-none" id="commandInput"
+                                   placeholder="Enter command..." onkeydown="handleCommandInput(event)">
+                            <button class="btn btn-outline-secondary" type="button"
+                                    onclick="injectCommand(document.getElementById('commandInput').value); document.getElementById('commandInput').value='';">
+                                <i class="bi bi-arrow-return-left"></i>
+                            </button>
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-secondary btn-terminal-action"
+                                    onclick="reconnectTerminal()" title="Reconnect">
+                                <i class="bi bi-arrow-repeat"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary btn-terminal-action"
+                                    onclick="resetTerminal()" title="Reset Terminal">
+                                <i class="bi bi-x-circle"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary btn-terminal-action"
+                                    onclick="clearTerminal()" title="Clear Terminal">
+                                <i class="bi bi-eraser"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0 terminal-card-body" id="terminal-container">
+                    <!-- Terminal will be created here by xterm.js -->
+                </div>
+                <div class="card-footer d-flex justify-content-between align-items-center">
+                    <div class="terminal-info text-muted small">
+                        <span id="terminalInfo">Not connected</span>
+                    </div>
+                    <div class="terminal-actions">
+                        <button class="btn btn-sm btn-outline-secondary" onclick="toggleFullscreen()"
+                                title="Toggle Fullscreen">
+                            <i class="bi bi-fullscreen"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-  <!-- Scripts -->
-  <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
-  <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
-  <script>
-    const term = new Terminal();
-    term.open(document.getElementById("terminal-container"));
-    term.focus();
+<!-- Modal for confirmations -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmModalLabel">Confirm Action</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="confirmModalBody">
+                Are you sure you want to perform this action?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmModalConfirm">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
 
-    const socket = io();
-    socket.emit("start_terminal");
+<!-- Toast container for notifications -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <!-- Toasts will be added here dynamically -->
+</div>
 
-    // Restore previous session
-    function restoreTerminalLog() {
-      const saved = sessionStorage.getItem("terminal_log");
-      if (saved) term.write(saved);
-    }
-
-    function appendTerminalLog(data) {
-      const current = sessionStorage.getItem("terminal_log") || "";
-      sessionStorage.setItem("terminal_log", current + data);
-    }
-
-    function clearTerminalLog() {
-      sessionStorage.removeItem("terminal_log");
-    }
-
-    restoreTerminalLog();
-
-    socket.on("terminal_output", data => {
-      term.write(data);
-      appendTerminalLog(data);
-    });
-
-    socket.on("disconnect", () => {
-      term.write("\r\n[Disconnected]\r\n");
-      // Optionally: clearTerminalLog();
-    });
-
-    function injectCommand(cmd) {
-      term.write(cmd);
-      term.focus();
-    }
-
-    term.onData(data => {
-      socket.emit("terminal_input", data);
-    });
-  </script>
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xterm-addon-web-links@0.9.0/lib/xterm-addon-web-links.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xterm-addon-search@0.13.0/lib/xterm-addon-search.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/socket.io@4.7.2/client-dist/socket.io.min.js"></script>
+<script src="{{ url_for('static', filename='js/terminal.js') }}"></script>
 </body>
 </html>

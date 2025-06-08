@@ -5,9 +5,22 @@ from utils.ssh_interface import run_ssh_command
 print("Camera Devices:")
 
 # Detect all video and media devices
-video_devices = run_ssh_command("ls /dev/video* 2>/dev/null")
-media_devices = run_ssh_command("ls /dev/media* 2>/dev/null")
-v4l2_output = run_ssh_command("v4l2-ctl --list-devices 2>/dev/null")
+video_result = run_ssh_command("ls /dev/video* 2>/dev/null")
+media_result = run_ssh_command("ls /dev/media* 2>/dev/null")
+v4l2_result = run_ssh_command("v4l2-ctl --list-devices 2>/dev/null")
+
+# Handle SSH results
+video_devices = video_result['output'] if video_result['success'] else ""
+media_devices = media_result['output'] if media_result['success'] else ""
+v4l2_output = v4l2_result['output'] if v4l2_result['success'] else ""
+
+# Check for any critical SSH errors
+if not video_result['success'] and video_result['returncode'] != 2:  # returncode 2 is normal for 'file not found'
+    print(f"❌ Error checking video devices: {video_result['stderr']}")
+if not media_result['success'] and media_result['returncode'] != 2:
+    print(f"❌ Error checking media devices: {media_result['stderr']}")
+if not v4l2_result['success']:
+    print(f"❌ Error running v4l2-ctl: {v4l2_result['stderr']}")
 
 # Initialize status variables
 camera_checked = 0

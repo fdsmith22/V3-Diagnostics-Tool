@@ -5,7 +5,12 @@ from utils.ssh_interface import run_ssh_command
 
 def get_wlan0_ip():
     # Get network interface information
-    interfaces_info = run_ssh_command("ip a")
+    interfaces_result = run_ssh_command("ip a")
+    
+    if not interfaces_result['success']:
+        return f"Error: {interfaces_result['stderr']}"
+    
+    interfaces_info = interfaces_result['output']
 
     # Extract the WLAN0 IP address using regex
     wlan0_ip = "Not connected"

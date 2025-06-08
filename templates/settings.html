@@ -1,0 +1,374 @@
+{% extends "base.html" %}
+
+{% block title %}V3 Diagnostics | Settings{% endblock %}
+
+{% block description %}V3 Diagnostics Settings - Configure SSH connection and application preferences{% endblock %}
+
+{% block content %}
+<div class="page-content animate-fade-in">
+  <!-- Settings Header -->
+  <div class="card mb-6">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="bi bi-gear-fill text-2xl"></i>
+        <div>
+          <h1 class="text-3xl font-bold">Settings</h1>
+          <p class="card-subtitle">Configure SSH connection and application preferences</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Form -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Main Settings Form -->
+    <div class="lg:col-span-2">
+      <div class="card animate-slide-in-left">
+        <div class="card-header">
+          <h2 class="card-title">
+            <i class="bi bi-ethernet"></i>
+            SSH Connection Settings
+          </h2>
+        </div>
+        
+        <form method="POST" class="card-body">
+          <div class="space-y-6">
+            <!-- SSH IP Address -->
+            <div>
+              <label for="ssh_ip" class="block text-sm font-medium text-gray-300 mb-2">
+                SSH IP Address
+              </label>
+              <input type="text" 
+                     id="ssh_ip" 
+                     name="ssh_ip" 
+                     value="{{ ssh_ip }}"
+                     class="w-full px-4 py-3 bg-surface-700 border border-surface-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent transition-colors"
+                     placeholder="192.168.55.1"
+                     required>
+              <p class="mt-1 text-sm text-gray-400">IP address of the target device</p>
+            </div>
+
+          <!-- SSH Username -->
+          <div>
+            <label for="ssh_username" class="block text-sm font-medium text-gray-300 mb-2">
+              SSH Username
+            </label>
+            <input type="text" 
+                   id="ssh_username" 
+                   name="ssh_username" 
+                   value="{{ ssh_username }}"
+                   class="w-full px-4 py-3 bg-surface-700 border border-surface-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent transition-colors"
+                   placeholder="ubuntu"
+                   required>
+            <p class="mt-1 text-sm text-gray-400">SSH username for the target device</p>
+          </div>
+
+          <!-- SSH Password -->
+          <div>
+            <label for="ssh_password" class="block text-sm font-medium text-gray-300 mb-2">
+              SSH Password
+            </label>
+            <div class="relative">
+              <input type="password" 
+                     id="ssh_password" 
+                     name="ssh_password" 
+                     class="w-full px-4 py-3 bg-surface-700 border border-surface-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent transition-colors pr-12"
+                     placeholder="Enter password">
+              <button type="button" 
+                      onclick="togglePasswordVisibility()"
+                      class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors">
+                <i id="passwordToggleIcon" class="bi bi-eye"></i>
+              </button>
+            </div>
+            <p class="mt-1 text-sm text-gray-400">SSH password for authentication</p>
+          </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center gap-4 pt-4">
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-check-circle"></i>
+                Save Settings
+              </button>
+              
+              <button type="button" onclick="testConnection()" class="btn btn-success">
+                <i class="bi bi-wifi"></i>
+                Test Connection
+              </button>
+              
+              <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i>
+                Back to Dashboard
+              </a>
+            </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Connection Status & Help -->
+  <div class="space-y-6">
+    <!-- Current Connection Status -->
+    <div class="card animate-slide-in-right">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="bi bi-activity text-green-400"></i>
+          Connection Status
+        </h3>
+      </div>
+      <div class="card-body">
+        <div id="connectionStatus" class="space-y-3">
+          <div class="flex items-center justify-between p-3 bg-surface-700 rounded-lg">
+            <span class="text-gray-300">Status</span>
+            <span id="statusIndicator" class="px-3 py-1 bg-yellow-600 text-yellow-100 rounded-full text-sm">
+              Checking...
+            </span>
+          </div>
+          <div class="flex items-center justify-between p-3 bg-surface-700 rounded-lg">
+            <span class="text-gray-300">SSH Available</span>
+            <span id="sshIndicator" class="px-3 py-1 bg-gray-600 text-gray-100 rounded-full text-sm">
+              
+            </span>
+          </div>
+          <div class="flex items-center justify-between p-3 bg-surface-700 rounded-lg">
+            <span class="text-gray-300">Last Test</span>
+            <span id="lastTestTime" class="text-gray-400 text-sm">
+              Never
+            </span>
+          </div>
+        </div>
+        
+        <button onclick="refreshConnectionStatus()" class="btn btn-outline w-full mt-4">
+          <i class="bi bi-arrow-clockwise"></i>
+          Refresh Status
+        </button>
+      </div>
+    </div>
+
+    <!-- Help & Tips -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="bi bi-info-circle text-blue-400"></i>
+          Help & Tips
+        </h3>
+      </div>
+      <div class="card-body space-y-4">
+        <div class="p-3 bg-blue-900/20 border border-blue-600/30 rounded-lg">
+          <div class="flex items-start space-x-2">
+            <i class="bi bi-lightbulb text-blue-400 text-sm mt-0.5"></i>
+            <div>
+              <div class="text-blue-300 text-sm font-medium">SSH Connection</div>
+              <p class="text-gray-300 text-xs mt-1">Ensure the target device has SSH enabled and is accessible on the network.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-3 bg-green-900/20 border border-green-600/30 rounded-lg">
+          <div class="flex items-start space-x-2">
+            <i class="bi bi-shield-check text-green-400 text-sm mt-0.5"></i>
+            <div>
+              <div class="text-green-300 text-sm font-medium">Security</div>
+              <p class="text-gray-300 text-xs mt-1">Credentials are stored locally and used only for SSH connections.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-3 bg-yellow-900/20 border border-yellow-600/30 rounded-lg">
+          <div class="flex items-start space-x-2">
+            <i class="bi bi-exclamation-triangle text-yellow-400 text-sm mt-0.5"></i>
+            <div>
+              <div class="text-yellow-300 text-sm font-medium">Troubleshooting</div>
+              <p class="text-gray-300 text-xs mt-1">If connection fails, check firewall settings and SSH service status.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="bi bi-lightning text-yellow-400"></i>
+          Quick Actions
+        </h3>
+      </div>
+      <div class="card-body space-y-2">
+        <button onclick="clearCache()" class="btn btn-danger w-full">
+          <i class="bi bi-trash"></i>
+          Clear Cache
+        </button>
+        
+        <button onclick="resetToDefaults()" class="btn btn-warning w-full">
+          <i class="bi bi-arrow-counterclockwise"></i>
+          Reset to Defaults
+        </button>
+        
+        <a href="{{ url_for('terminal') }}" class="btn btn-primary w-full">
+          <i class="bi bi-terminal"></i>
+          Open Terminal
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Password visibility toggle
+function togglePasswordVisibility() {
+  const passwordInput = document.getElementById('ssh_password');
+  const toggleIcon = document.getElementById('passwordToggleIcon');
+  
+  if (passwordInput.type === 'password') {
+    passwordInput.type = 'text';
+    toggleIcon.className = 'bi bi-eye-slash';
+  } else {
+    passwordInput.type = 'password';
+    toggleIcon.className = 'bi bi-eye';
+  }
+}
+
+// Test connection function
+async function testConnection() {
+  const button = event.target;
+  const originalText = button.innerHTML;
+  
+  button.innerHTML = '<i class="bi bi-arrow-repeat mr-2 animate-spin"></i>Testing...';
+  button.disabled = true;
+  
+  try {
+    const response = await fetch('/connection_status?refresh=true');
+    const data = await response.json();
+    
+    if (data.connected) {
+      showToast('Connection test successful!', 'success');
+    } else {
+      showToast('Connection test failed: ' + (data.error || 'Unknown error'), 'error');
+    }
+    
+    updateConnectionStatus(data);
+  } catch (error) {
+    showToast('Connection test failed: ' + error.message, 'error');
+  } finally {
+    button.innerHTML = originalText;
+    button.disabled = false;
+  }
+}
+
+// Refresh connection status
+async function refreshConnectionStatus() {
+  try {
+    const response = await fetch('/connection_status');
+    const data = await response.json();
+    updateConnectionStatus(data);
+  } catch (error) {
+    console.error('Failed to refresh connection status:', error);
+  }
+}
+
+// Update connection status display
+function updateConnectionStatus(data) {
+  const statusIndicator = document.getElementById('statusIndicator');
+  const sshIndicator = document.getElementById('sshIndicator');
+  const lastTestTime = document.getElementById('lastTestTime');
+  
+  if (data.connected) {
+    statusIndicator.className = 'px-3 py-1 bg-green-600 text-green-100 rounded-full text-sm';
+    statusIndicator.textContent = 'Connected';
+  } else {
+    statusIndicator.className = 'px-3 py-1 bg-red-600 text-red-100 rounded-full text-sm';
+    statusIndicator.textContent = 'Disconnected';
+  }
+  
+  if (data.details && data.details.ssh_available) {
+    sshIndicator.className = 'px-3 py-1 bg-green-600 text-green-100 rounded-full text-sm';
+    sshIndicator.textContent = 'Available';
+  } else {
+    sshIndicator.className = 'px-3 py-1 bg-red-600 text-red-100 rounded-full text-sm';
+    sshIndicator.textContent = 'Unavailable';
+  }
+  
+  lastTestTime.textContent = new Date().toLocaleTimeString();
+}
+
+// Clear cache
+function clearCache() {
+  if (confirm('Clear all cached data?')) {
+    sessionStorage.clear();
+    localStorage.clear();
+    showToast('Cache cleared successfully', 'success');
+  }
+}
+
+// Reset to defaults
+function resetToDefaults() {
+  if (confirm('Reset all settings to defaults? This will clear SSH credentials.')) {
+    document.getElementById('ssh_ip').value = '192.168.55.1';
+    document.getElementById('ssh_username').value = 'ubuntu';
+    document.getElementById('ssh_password').value = '';
+    showToast('Settings reset to defaults', 'info');
+  }
+}
+
+// Toast notification function
+function showToast(message, type = 'info') {
+  // Create toast container if it doesn't exist
+  let container = document.querySelector('.toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.className = 'toast-container fixed top-4 right-4 z-50 space-y-2';
+    document.body.appendChild(container);
+  }
+  
+  // Create toast element
+  const toast = document.createElement('div');
+  const colorClasses = {
+    success: 'bg-green-600 border-green-500',
+    error: 'bg-red-600 border-red-500',
+    warning: 'bg-yellow-600 border-yellow-500',
+    info: 'bg-blue-600 border-blue-500'
+  };
+  
+  const iconClasses = {
+    success: 'bi-check-circle',
+    error: 'bi-exclamation-circle',
+    warning: 'bi-exclamation-triangle',
+    info: 'bi-info-circle'
+  };
+  
+  toast.className = `flex items-center w-80 p-4 text-white ${colorClasses[type] || colorClasses.info} border rounded-lg shadow-lg transform transition-all duration-300 ease-in-out translate-x-full opacity-0`;
+  
+  toast.innerHTML = `
+    <div class="flex items-center flex-1">
+      <i class="bi ${iconClasses[type] || iconClasses.info} mr-3 text-lg"></i>
+      <span class="text-sm font-medium">${message}</span>
+    </div>
+    <button onclick="this.parentElement.remove()" class="ml-4 p-1 hover:bg-white/20 rounded transition-colors">
+      <i class="bi bi-x text-lg"></i>
+    </button>
+  `;
+  
+  container.appendChild(toast);
+  
+  // Show toast
+  setTimeout(() => {
+    toast.classList.remove('translate-x-full', 'opacity-0');
+    toast.classList.add('translate-x-0', 'opacity-100');
+  }, 10);
+  
+  // Auto-hide toast
+  setTimeout(() => {
+    toast.classList.remove('translate-x-0', 'opacity-100');
+    toast.classList.add('translate-x-full', 'opacity-0');
+    setTimeout(() => toast.remove(), 300);
+  }, 5000);
+}
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+  refreshConnectionStatus();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,775 @@
+{% extends "base.html" %}
+
+{% block title %}V3 Diagnostics | Interactive Terminal{% endblock %}
+
+{% block description %}V3 Diagnostics Terminal - Secure SSH access to connected devices with advanced command management{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/terminal.css') }}">
+<style>
+/* Custom styles for ttyd iframe integration */
+.ttyd-container {
+    background: #0d1117;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.ttyd-iframe {
+    border: none;
+    background: #000;
+    width: 100%;
+    height: 100%;
+    min-height: 600px;
+    display: block;
+}
+
+/* Sidebar integration - use terminal.css classes */
+
+/* Z-index hierarchy fixes for proper layering */
+.terminal-assistant {
+    z-index: 1050 !important;
+}
+
+.terminal-assistant-overlay {
+    z-index: 1049 !important;
+}
+
+.sidebar-toggle {
+    z-index: 1055 !important;
+}
+
+/* Notification and popup z-index fixes */
+.notification-popup {
+    z-index: 10000 !important;
+}
+
+.paste-instruction {
+    z-index: 10001 !important;
+}
+
+/* Additional sidebar item styling */
+.sidebar-item {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background: rgba(22, 27, 34, 0.8);
+    border: 1px solid var(--terminal-border);
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.sidebar-item:hover {
+    background: rgba(88, 166, 255, 0.1);
+    border-color: #58a6ff;
+    transform: translateY(-1px);
+}
+
+.sidebar-item-icon {
+    color: #58a6ff;
+    width: 16px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.sidebar-section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+}
+
+.sidebar-section-icon {
+    color: #58a6ff;
+    width: 16px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+/* Ensure terminal content doesn't interfere */
+.terminal-content {
+    z-index: 1;
+}
+
+/* Sidebar sections expansion */
+.sidebar-section.expanded .sidebar-section-content {
+    max-height: 2000px !important;
+    overflow: visible !important;
+}
+
+.sidebar-section .sidebar-section-content {
+    max-height: 0 !important;
+    overflow: hidden !important;
+    transition: max-height 0.3s ease-out !important;
+}
+
+.connection-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.status-connected {
+    background-color: rgba(34, 197, 94, 0.1);
+    color: rgb(34, 197, 94);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.status-connecting {
+    background-color: rgba(234, 179, 8, 0.1);
+    color: rgb(234, 179, 8);
+    border: 1px solid rgba(234, 179, 8, 0.2);
+}
+
+.status-error {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: rgb(239, 68, 68);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.terminal-controls {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.control-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    border: 1px solid rgba(75, 85, 99, 0.5);
+    background: rgba(55, 65, 81, 0.8);
+    color: white;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.control-btn:hover {
+    background: rgba(75, 85, 99, 0.8);
+    border-color: rgba(99, 102, 241, 0.5);
+}
+
+.control-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+</style>
+{% endblock %}
+
+{% block container_class %}w-full px-0{% endblock %}
+
+{% block content %}
+<!-- Include the sidebar component -->
+{% include 'sidebar.html' %}
+
+<div class="page-content animate-fade-in">
+  <div class="terminal-wrapper h-full flex flex-col">
+
+    <!-- Terminal Header Section -->
+    <section class="navbar px-6 py-4">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <!-- Title Area -->
+            <div class="navbar-brand">
+                <div class="navbar-brand-icon">
+                    <i class="bi bi-terminal-fill text-xl" aria-hidden="true"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold">Interactive Terminal</h1>
+                    <p class="text-sm opacity-70">
+                        Secure SSH access via ttyd - Reliable terminal connection
+                    </p>
+                </div>
+            </div>
+
+            <!-- Action Area -->
+            <div class="flex flex-wrap items-center gap-2">
+                <!-- Connection Status Badge -->
+                <div id="connectionStatus" class="connection-status status-connecting">
+                    <i class="bi bi-circle-fill mr-2 text-xs animate-pulse"></i>
+                    <span>Connecting...</span>
+                </div>
+
+                <!-- Terminal Control Buttons -->
+                <div class="terminal-controls">
+                    <button onclick="refreshTerminal()" class="control-btn" title="Refresh Terminal">
+                        <i class="bi bi-arrow-clockwise"></i>
+                        <span class="hidden sm:inline ml-1">Refresh</span>
+                    </button>
+
+                    <button onclick="toggleFullscreen()" class="control-btn" title="Toggle Fullscreen">
+                        <i class="bi bi-arrows-fullscreen"></i>
+                        <span class="hidden sm:inline ml-1">Fullscreen</span>
+                    </button>
+
+                    <button onclick="openNewWindow()" class="control-btn" title="Open in New Window">
+                        <i class="bi bi-box-arrow-up-right"></i>
+                        <span class="hidden sm:inline ml-1">New Window</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Terminal Layout -->
+    <section class="terminal-layout px-6 py-4 flex-1">
+        <!-- Central Terminal Content -->
+        <div class="terminal flex-1 flex flex-col min-w-0">
+            <!-- Terminal Window Header -->
+            <div class="terminal-header bg-gray-800 px-4 py-2 rounded-t-lg border-b border-gray-600">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <div class="flex space-x-1">
+                            <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+                            <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                            <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                        </div>
+                        <div class="text-sm text-gray-300 font-mono">ubuntu@192.168.55.1</div>
+                    </div>
+                    <div class="text-xs text-gray-400">ttyd terminal</div>
+                </div>
+            </div>
+
+            <!-- Terminal Display Area -->
+            <div class="terminal-content ttyd-container flex-1 relative">
+                <!-- Terminal iframe -->
+                <iframe 
+                    id="terminalIframe"
+                    src="http://localhost:8080/"
+                    class="ttyd-iframe"
+                    onload="handleIframeLoad()"
+                    onerror="handleIframeError()"
+                    allowfullscreen>
+                </iframe>
+                
+                <!-- Direct Link to TTYD (fallback) -->
+                <div id="terminalRedirect" class="absolute inset-0 flex items-center justify-center bg-gray-900 bg-opacity-90 hidden">
+                    <div class="text-center max-w-md">
+                        <i class="bi bi-terminal-fill text-6xl text-blue-400 mb-6"></i>
+                        <h3 class="text-xl font-semibold text-white mb-4">Terminal Ready</h3>
+                        <p class="text-gray-300 text-sm mb-6">Click the button below to open the interactive terminal in a new window:</p>
+                        <button onclick="openTerminalWindow()" class="control-btn bg-blue-600 hover:bg-blue-500 px-6 py-3 text-lg">
+                            <i class="bi bi-box-arrow-up-right mr-2"></i>
+                            Open Terminal
+                        </button>
+                        <p class="text-gray-400 text-xs mt-4">Terminal will open at: localhost:8080</p>
+                    </div>
+                </div>
+                
+                <!-- Loading Overlay -->
+                <div id="loadingOverlay" class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-75 z-10">
+                    <div class="text-center">
+                        <div class="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mb-4 mx-auto"></div>
+                        <p class="text-white text-sm">Connecting to terminal...</p>
+                    </div>
+                </div>
+
+                <!-- Error Overlay -->
+                <div id="errorOverlay" class="absolute inset-0 flex items-center justify-center bg-red-900 bg-opacity-75 z-10 hidden">
+                    <div class="text-center">
+                        <i class="bi bi-exclamation-triangle text-4xl text-red-400 mb-4"></i>
+                        <p class="text-white text-lg mb-2">Terminal Service Unavailable</p>
+                        <p class="text-red-200 text-sm mb-4">Please ensure ttyd is running on port 8080</p>
+                        <button onclick="checkTerminalStatus()" class="control-btn">
+                            <i class="bi bi-arrow-clockwise mr-1"></i>
+                            Check Status
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+  </div>
+</div>
+
+<script>
+// Terminal management functions
+let isFullscreen = false;
+let connectionCheckInterval;
+
+// Check connection status
+function checkConnectionStatus() {
+    fetch('/terminal-proxy/')
+        .then(response => {
+            if (response.ok) {
+                updateConnectionStatus('connected');
+            } else {
+                updateConnectionStatus('error');
+            }
+        })
+        .catch(() => {
+            updateConnectionStatus('error');
+        });
+}
+
+// Update connection status display
+function updateConnectionStatus(status) {
+    const statusEl = document.getElementById('connectionStatus');
+    const classes = ['status-connected', 'status-connecting', 'status-error'];
+    
+    statusEl.classList.remove(...classes);
+    
+    switch(status) {
+        case 'connected':
+            statusEl.classList.add('status-connected');
+            statusEl.innerHTML = '<i class="bi bi-circle-fill mr-2 text-xs text-green-400"></i><span>Connected</span>';
+            hideOverlay();
+            break;
+        case 'error':
+            statusEl.classList.add('status-error');
+            statusEl.innerHTML = '<i class="bi bi-circle-fill mr-2 text-xs text-red-400"></i><span>Connection Error</span>';
+            showErrorOverlay();
+            break;
+        default:
+            statusEl.classList.add('status-connecting');
+            statusEl.innerHTML = '<i class="bi bi-circle-fill mr-2 text-xs animate-pulse"></i><span>Connecting...</span>';
+            showLoadingOverlay();
+    }
+}
+
+// Iframe event handlers
+function handleIframeLoad() {
+    console.log('Terminal iframe loaded successfully');
+    setTimeout(() => {
+        updateConnectionStatus('connected');
+        hideOverlay(); // Hide loading overlay when iframe loads
+    }, 1000);
+}
+
+function handleIframeError() {
+    console.log('Terminal iframe failed to load');
+    updateConnectionStatus('error');
+    showErrorOverlay();
+}
+
+// Overlay management
+function showLoadingOverlay() {
+    document.getElementById('loadingOverlay').classList.remove('hidden');
+    document.getElementById('errorOverlay').classList.add('hidden');
+}
+
+function showErrorOverlay() {
+    document.getElementById('loadingOverlay').classList.add('hidden');
+    document.getElementById('errorOverlay').classList.remove('hidden');
+}
+
+function hideOverlay() {
+    document.getElementById('loadingOverlay').classList.add('hidden');
+    document.getElementById('errorOverlay').classList.add('hidden');
+}
+
+// Terminal control functions
+function openTerminalWindow() {
+    // First check if ttyd is available
+    fetch('http://localhost:8080/')
+        .then(response => {
+            if (response.ok) {
+                // Open ttyd in new window
+                window.open('http://localhost:8080/', '_blank', 'width=1200,height=800,toolbar=0,menubar=0,location=0');
+                updateConnectionStatus('connected');
+            } else {
+                throw new Error('TTYD not available');
+            }
+        })
+        .catch(error => {
+            console.error('Failed to connect to ttyd:', error);
+            updateConnectionStatus('error');
+            showErrorOverlay();
+        });
+}
+
+function checkTerminalStatus() {
+    updateConnectionStatus('connecting');
+    
+    // Check if ttyd is running
+    fetch('http://localhost:8080/')
+        .then(response => {
+            if (response.ok) {
+                updateConnectionStatus('connected');
+                hideOverlay();
+                console.log('TTYD is running and accessible');
+            } else {
+                throw new Error('TTYD not responding');
+            }
+        })
+        .catch(error => {
+            console.error('TTYD status check failed:', error);
+            updateConnectionStatus('error');
+            hideOverlay();
+            document.getElementById('terminalRedirect').classList.remove('hidden');
+        });
+}
+
+function refreshTerminal() {
+    checkTerminalStatus();
+}
+
+function toggleFullscreen() {
+    const wrapper = document.querySelector('.terminal-wrapper');
+    
+    if (!isFullscreen) {
+        wrapper.classList.add('fixed', 'inset-0', 'z-50', 'bg-gray-900');
+        document.body.style.overflow = 'hidden';
+        isFullscreen = true;
+    } else {
+        wrapper.classList.remove('fixed', 'inset-0', 'z-50', 'bg-gray-900');
+        document.body.style.overflow = '';
+        isFullscreen = false;
+    }
+}
+
+function openNewWindow() {
+    openTerminalWindow();
+}
+
+// Focus the terminal iframe
+function focusTerminal() {
+    const iframe = document.getElementById('terminalIframe');
+    if (iframe) {
+        try {
+            iframe.contentWindow.focus();
+            iframe.focus();
+            console.log('Terminal focused');
+        } catch (e) {
+            console.log('Could not focus terminal iframe:', e.message);
+        }
+    }
+}
+
+
+function toggleCommandCategories() {
+    const sidebar = document.getElementById('commandCategoriesSidebar');
+    sidebar.classList.toggle('hidden');
+}
+
+// Send command to terminal via ttyd
+function sendCommand(command) {
+    injectCommand(command);
+}
+
+// Global function to inject commands into ttyd terminal
+window.injectCommand = function(command) {
+    console.log('Injecting command into ttyd terminal:', command);
+    
+    // Add command to sidebar history
+    if (typeof addCommandToHistory === 'function') {
+        addCommandToHistory(command);
+    }
+    
+    // Focus the iframe first
+    const iframe = document.getElementById('terminalIframe');
+    if (iframe) {
+        try {
+            iframe.focus();
+            if (iframe.contentWindow) {
+                iframe.contentWindow.focus();
+            }
+        } catch (e) {
+            console.log('Could not focus iframe:', e.message);
+        }
+    }
+    
+    // Use clipboard approach with clear instructions
+    navigator.clipboard.writeText(command).then(() => {
+        console.log('Command copied to clipboard:', command);
+        showSimpleCommandFeedback(command);
+    }).catch(err => {
+        console.error('Clipboard write failed:', err);
+        fallbackCopy(command);
+    });
+};
+
+// Clipboard fallback method
+function clipboardFallback(command) {
+    console.log('Using clipboard fallback for command:', command);
+    
+    const iframe = document.getElementById('terminalIframe');
+    if (iframe) {
+        iframe.focus();
+    }
+    
+    // Copy command to clipboard
+    navigator.clipboard.writeText(command).then(() => {
+        console.log('Command copied to clipboard');
+        showCommandFeedback(command, false);
+    }).catch(err => {
+        console.error('Clipboard write failed:', err);
+        fallbackCopy(command);
+    });
+}
+
+
+// Show enhanced paste instruction popup
+function showPasteInstructionPopup(command) {
+    // Remove any existing popups
+    const existingPopups = document.querySelectorAll('.paste-instruction-popup');
+    existingPopups.forEach(popup => popup.remove());
+    
+    const popup = document.createElement('div');
+    popup.className = 'paste-instruction-popup fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-blue-900 text-white p-6 rounded-xl shadow-2xl border border-blue-600 max-w-md z-50';
+    popup.style.zIndex = '10000';
+    
+    popup.innerHTML = `
+        <div class="text-center">
+            <div class="flex items-center justify-center w-16 h-16 bg-blue-700 rounded-full mx-auto mb-4">
+                <i class="bi bi-clipboard-check text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold mb-2">Command Ready to Paste</h3>
+            <div class="bg-blue-800 p-3 rounded-lg mb-4">
+                <code class="text-blue-200 text-sm">${command}</code>
+            </div>
+            <p class="text-blue-200 text-sm mb-4">
+                Click in the terminal and press <kbd class="bg-blue-700 px-2 py-1 rounded text-xs">Ctrl+V</kbd> to execute
+            </p>
+            <div class="flex space-x-2 justify-center">
+                <button onclick="this.parentElement.parentElement.parentElement.remove()" 
+                        class="px-4 py-2 bg-blue-700 hover:bg-blue-600 rounded-lg text-sm transition-colors">
+                    Got it
+                </button>
+                <button onclick="copyAgain('${command}')" 
+                        class="px-4 py-2 bg-green-700 hover:bg-green-600 rounded-lg text-sm transition-colors">
+                    Copy Again
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(popup);
+    
+    // Auto-remove after 8 seconds
+    setTimeout(() => {
+        if (popup.parentNode) {
+            popup.style.opacity = '0';
+            popup.style.transform = 'translate(-50%, -50%) scale(0.9)';
+            setTimeout(() => popup.remove(), 300);
+        }
+    }, 8000);
+}
+
+function copyAgain(command) {
+    navigator.clipboard.writeText(command + '\n').then(() => {
+        console.log('Command copied again');
+        const popup = document.querySelector('.paste-instruction-popup');
+        if (popup) {
+            const button = popup.querySelector('button:last-child');
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="bi bi-check"></i> Copied!';
+            button.className = 'px-4 py-2 bg-green-600 rounded-lg text-sm';
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.className = 'px-4 py-2 bg-green-700 hover:bg-green-600 rounded-lg text-sm transition-colors';
+            }, 1000);
+        }
+    }).catch(err => {
+        console.error('Copy failed:', err);
+    });
+}
+
+// Show simple command feedback
+function showSimpleCommandFeedback(command) {
+    // Remove any existing feedback
+    const existingFeedback = document.querySelectorAll('.command-feedback');
+    existingFeedback.forEach(fb => fb.remove());
+    
+    const feedback = document.createElement('div');
+    feedback.className = 'command-feedback fixed bottom-4 right-4 bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg border border-blue-400';
+    feedback.style.zIndex = '10000';
+    
+    feedback.innerHTML = `
+        <div class="flex items-center space-x-3">
+            <i class="bi bi-clipboard-check text-lg"></i>
+            <div>
+                <div class="font-medium text-sm">Command Ready</div>
+                <div class="text-blue-200 text-xs">Right-click in terminal → Paste</div>
+            </div>
+        </div>
+        <div class="mt-2 p-2 bg-blue-700 rounded text-xs font-mono">${command}</div>
+    `;
+    
+    document.body.appendChild(feedback);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        feedback.style.opacity = '0';
+        feedback.style.transform = 'translateY(20px)';
+        setTimeout(() => feedback.remove(), 300);
+    }, 5000);
+}
+
+// Show command feedback
+function showCommandFeedback(command, status) {
+    const feedback = document.createElement('div');
+    
+    if (status === 'injected') {
+        feedback.className = 'paste-instruction fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg';
+        feedback.innerHTML = `
+            <div class="flex items-center space-x-2">
+                <i class="bi bi-terminal"></i>
+                <span class="text-sm">Ready: ${command} - Press Enter to execute</span>
+            </div>
+        `;
+    } else if (status === true || status === 'executed') {
+        feedback.className = 'paste-instruction fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg';
+        feedback.innerHTML = `
+            <div class="flex items-center space-x-2">
+                <i class="bi bi-check-circle"></i>
+                <span class="text-sm">Executed: ${command}</span>
+            </div>
+        `;
+    } else {
+        feedback.className = 'paste-instruction fixed bottom-4 right-4 bg-orange-600 text-white px-4 py-2 rounded-lg shadow-lg';
+        feedback.innerHTML = `
+            <div class="flex items-center space-x-2">
+                <i class="bi bi-clipboard-check"></i>
+                <span class="text-sm">Copied: ${command} - Right-click paste in terminal</span>
+            </div>
+        `;
+    }
+    
+    document.body.appendChild(feedback);
+    
+    const duration = status === 'injected' ? 3000 : (status === true || status === 'executed' ? 2000 : 4000);
+    
+    setTimeout(() => {
+        feedback.style.opacity = '0';
+        feedback.style.transform = 'translateY(20px)';
+        setTimeout(() => feedback.remove(), 300);
+    }, duration);
+}
+
+// Show paste instruction helper
+function showPasteInstruction() {
+    const instruction = document.createElement('div');
+    instruction.className = 'paste-instruction fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg';
+    instruction.innerHTML = `
+        <div class="flex items-center space-x-2">
+            <i class="bi bi-keyboard"></i>
+            <span class="text-sm">Press Ctrl+V in terminal to paste</span>
+        </div>
+    `;
+    document.body.appendChild(instruction);
+    
+    setTimeout(() => {
+        instruction.style.opacity = '0';
+        instruction.style.transform = 'translateY(20px)';
+        setTimeout(() => instruction.remove(), 300);
+    }, 4000);
+}
+
+// Fallback copy method
+function fallbackCopy(command) {
+    const textArea = document.createElement('textarea');
+    textArea.value = command + '\r';
+    textArea.style.position = 'fixed';
+    textArea.style.top = '-1000px';
+    document.body.appendChild(textArea);
+    textArea.select();
+    try {
+        document.execCommand('copy');
+        console.log('Command copied via fallback');
+        showCommandFeedback(command, false);
+    } catch (e) {
+        console.error('Fallback copy failed:', e);
+    }
+    document.body.removeChild(textArea);
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Terminal page loaded, initializing...');
+    
+    // Show loading overlay initially
+    showLoadingOverlay();
+    updateConnectionStatus('connecting');
+    
+    // Check if iframe loads successfully
+    const iframe = document.getElementById('terminalIframe');
+    if (iframe) {
+        // Add detailed iframe debugging
+        iframe.addEventListener('load', function() {
+            console.log('Iframe load event triggered');
+            setTimeout(() => {
+                hideOverlay();
+                updateConnectionStatus('connected');
+            }, 1000);
+        });
+        
+        iframe.addEventListener('error', function() {
+            console.log('Iframe error event triggered');
+            updateConnectionStatus('error');
+            showErrorOverlay();
+        });
+        
+        // Set a timeout for iframe loading
+        setTimeout(() => {
+            try {
+                // Try to access iframe content
+                if (iframe.contentDocument || iframe.contentWindow) {
+                    console.log('Iframe content accessible');
+                    hideOverlay();
+                    updateConnectionStatus('connected');
+                } else {
+                    console.log('Iframe content not accessible - cross-origin or loading issue');
+                    // This is expected for cross-origin, so just hide overlay and assume it works
+                    hideOverlay();
+                    updateConnectionStatus('connected');
+                }
+            } catch (e) {
+                console.log('Iframe access error (expected for cross-origin):', e.message);
+                // Hide overlay and assume it's working
+                hideOverlay();
+                updateConnectionStatus('connected');
+            }
+        }, 3000);
+    }
+    
+    // Start connection monitoring every 30 seconds
+    connectionCheckInterval = setInterval(checkConnectionStatus, 30000);
+    
+    // Debug sidebar functionality
+    console.log('Checking sidebar elements...');
+    console.log('Sidebar:', document.getElementById('terminalAssistantSidebar'));
+    console.log('Toggle button:', document.getElementById('sidebarToggle'));
+    console.log('Overlay:', document.getElementById('terminalAssistantOverlay'));
+    
+    // Ensure sidebar functionality is properly initialized
+    // Check if sidebar toggle functions exist from sidebar.html
+    if (typeof toggleTerminalAssistant !== 'function') {
+        console.warn('toggleTerminalAssistant function not found - sidebar may not work');
+    }
+    
+    // Check if section toggle functions exist
+    if (typeof toggleSidebarSection !== 'function') {
+        console.warn('toggleSidebarSection function not found - section expansion may not work');
+    }
+    
+    // Make sure the global injectCommand function is accessible to sidebar
+    if (typeof window.injectCommand === 'function') {
+        console.log('injectCommand function available globally');
+        // Also make it available to any child contexts
+        window.parent.injectCommand = window.injectCommand;
+    } else {
+        console.warn('injectCommand function not found');
+    }
+    
+    // Initialize sidebar functionality
+    console.log('Terminal initialization complete');
+});
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', () => {
+    if (connectionCheckInterval) {
+        clearInterval(connectionCheckInterval);
+    }
+});
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<!-- No additional JavaScript libraries needed for ttyd -->
+{% endblock %}

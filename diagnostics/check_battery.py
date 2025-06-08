@@ -31,8 +31,19 @@ def battery_bar(percent):
 try:
     print("[BATTERY STATUS]")
 
-    vbat_response = run_ssh_command("curl -s http://localhost:2000/battery_charger_field/BATTERY_CHARGER_FIELD_VBAT_ADC")
-    vac1_response = run_ssh_command("curl -s http://localhost:2000/battery_charger_field/BATTERY_CHARGER_FIELD_VAC1_ADC")
+    vbat_result = run_ssh_command("curl -s http://localhost:2000/battery_charger_field/BATTERY_CHARGER_FIELD_VBAT_ADC")
+    vac1_result = run_ssh_command("curl -s http://localhost:2000/battery_charger_field/BATTERY_CHARGER_FIELD_VAC1_ADC")
+
+    if not vbat_result['success']:
+        print(f"❌ Error getting VBAT data: {vbat_result['stderr']}")
+        sys.exit(1)
+    
+    if not vac1_result['success']:
+        print(f"❌ Error getting VAC1 data: {vac1_result['stderr']}")
+        sys.exit(1)
+
+    vbat_response = vbat_result['output']
+    vac1_response = vac1_result['output']
 
     print(f"🔧 Raw VBAT Response: {vbat_response}")
     print(f"🔧 Raw VAC1 Response: {vac1_response}")

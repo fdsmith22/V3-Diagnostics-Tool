@@ -1,4 +1,53 @@
+# Environment and credentials
 .env
+.env.local
+.env.production
+
+# Python
 venv/
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.coverage
+.pytest_cache/
+dist/
+build/
+*.egg-info/
+
+# Logs
+*.log
+logs/
+app_*.log
+server*.log
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Temporary files
+*.tmp
+*.bak
+*.backup
+*_old.*
+*_backup.*
+
+# Test files
+test_*.py
+*_test.py
+
+# Documentation drafts
+*_draft.md
+*_notes.md
+*_fixes.md
+*_improvements.md
+
+# OS generated files
+Thumbs.db
+.directory

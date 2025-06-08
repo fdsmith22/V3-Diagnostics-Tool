@@ -1,77 +1,234 @@
-<nav class="navbar navbar-expand-lg navbar-dark shadow-sm">
-  <div class="container-fluid">
-    <a class="navbar-brand d-flex align-items-center" href="/">
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-cpu me-2" viewBox="0 0 16 16">
-        <path d="M5 0a.5.5 0 0 1 .5.5V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 1 0V2A2.5 2.5 0 0 1 14 4.5h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14a2.5 2.5 0 0 1-2.5 2.5v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14A2.5 2.5 0 0 1 2 11.5H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2A2.5 2.5 0 0 1 4.5 2V.5A.5.5 0 0 1 5 0zm-.5 3A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13h7a1.5 1.5 0 0 0 1.5-1.5v-7A1.5 1.5 0 0 0 11.5 3h-7zM5 6.5A1.5 1.5 0 0 1 6.5 5h3A1.5 1.5 0 0 1 11 6.5v3A1.5 1.5 0 0 1 9.5 11h-3A1.5 1.5 0 0 1 5 9.5v-3zM6.5 6a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3z"/>
-      </svg>
-      <span>V3 Diagnostics</span>
-    </a>
+<nav class="navbar">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
 
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
-            aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
+      <!-- Brand Logo & Title -->
+      <a href="/" class="navbar-brand">
+        <div class="navbar-brand-icon">
+          <i class="bi bi-cpu-fill text-white text-xl"></i>
+        </div>
+        <div class="flex flex-col">
+          <span class="font-bold text-xl tracking-wide">V3 Diagnostics</span>
+          <span class="text-xs opacity-70 font-medium tracking-wider">Advanced System Monitor</span>
+        </div>
+      </a>
 
-    <div class="collapse navbar-collapse" id="navbarContent">
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item">
-          <a class="nav-link {% if request.path == '/' %}active{% endif %}"
-             href="/" aria-current="page">
-            <i class="bi bi-speedometer2 me-1"></i>Dashboard
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link {% if request.path == '/terminal' %}active{% endif %}"
-             href="/terminal">
-            <i class="bi bi-terminal me-1"></i>Terminal
-          </a>
-        </li>
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="diagnosticsDropdown" role="button"
-             data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="bi bi-clipboard-check me-1"></i>Diagnostics
-          </a>
-          <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="diagnosticsDropdown">
-            <li><a class="dropdown-item" href="javascript:void(0)" onclick="runTest('full_diagnostics')">
-              <i class="bi bi-lightning-charge me-1"></i>Full System Scan
-            </a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="javascript:void(0)" onclick="runTest('check_system')">System Check</a></li>
-            <li><a class="dropdown-item" href="javascript:void(0)" onclick="runTest('check_network')">Network Check</a></li>
-            <li><a class="dropdown-item" href="javascript:void(0)" onclick="runTest('check_modem')">Modem Check</a></li>
-            <li><a class="dropdown-item" href="javascript:void(0)" onclick="runTest('check_camera')">Camera Check</a></li>
-            <li><a class="dropdown-item" href="javascript:void(0)" onclick="runTest('check_power')">Power Check</a></li>
-          </ul>
-        </li>
-      </ul>
+      <!-- Mobile Menu Toggle -->
+      <button id="mobile-menu-toggle"
+              class="md:hidden p-3 rounded-xl bg-surface-700/80 border border-surface-600/50 hover:bg-surface-600 hover:border-primary-400/50 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary-400 backdrop-blur-sm"
+              onclick="toggleMobileMenu()">
+        <i class="bi bi-list text-xl text-gray-300"></i>
+      </button>
 
-      <div class="d-flex align-items-center">
-        <!-- Connection Status Indicator -->
-        <div class="me-3 d-none d-lg-block">
-          <span id="navbarConnectionStatus" class="badge rounded-pill"
-                style="background-color: var(--dark-card); color: var(--dark-text);">
-            <i class="bi bi-ethernet me-1"></i>
-            <span>Checking...</span>
-          </span>
+      <!-- Desktop Navigation -->
+      <div class="hidden md:flex items-center space-x-6">
+
+        <!-- Primary Navigation Links -->
+        <div class="navbar-nav">
+          <a href="/" class="nav-link {% if request.path == '/' %}active{% endif %}">
+            <i class="nav-link-icon bi bi-speedometer2"></i>
+            <span>Dashboard</span>
+          </a>
+
+          <a href="/terminal" class="nav-link {% if request.path == '/terminal' %}active{% endif %}">
+            <i class="nav-link-icon bi bi-terminal"></i>
+            <span>Terminal</span>
+          </a>
+
+          <a href="/mcu-uart" class="nav-link {% if request.path == '/mcu-uart' %}active{% endif %}">
+            <i class="nav-link-icon bi bi-cpu"></i>
+            <span>MCU UART</span>
+          </a>
+
+          <!-- Diagnostics Dropdown -->
+          <div class="relative group">
+            <button class="nav-link" onclick="toggleDropdown('diagnosticsDropdown')">
+              <i class="nav-link-icon bi bi-clipboard-check"></i>
+              <span>Diagnostics</span>
+              <i class="bi bi-chevron-down text-xs transition-transform duration-300" id="diagnosticsChevron"></i>
+            </button>
+
+            <!-- Dropdown Menu -->
+            <div id="diagnosticsDropdown"
+                 class="hidden absolute left-0 mt-3 w-64 bg-gradient-to-b from-surface-800 to-surface-900 rounded-xl shadow-2xl border border-surface-600/50 backdrop-blur-xl z-50 overflow-hidden"
+                 style="box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
+
+              <!-- Full System Scan -->
+              <a href="javascript:void(0)"
+                 onclick="runTest('full_diagnostics')"
+                 class="flex items-center px-5 py-4 text-gray-300 hover:bg-gradient-to-r hover:from-yellow-900/30 hover:to-yellow-800/20 hover:text-white transition-all duration-300 border-b border-surface-700/50 group">
+                <span class="p-2 bg-yellow-500/20 rounded-lg mr-4 border border-yellow-500/30 group-hover:bg-yellow-500/30 transition-colors">
+                  <i class="bi bi-lightning-charge text-yellow-400"></i>
+                </span>
+                <span class="flex flex-col">
+                  <span class="font-semibold">Full System Scan</span>
+                  <span class="text-xs text-gray-400 mt-0.5">Complete diagnostic analysis</span>
+                </span>
+              </a>
+
+              <div class="py-1">
+                <!-- Individual Tests -->
+                <a href="javascript:void(0)"
+                   onclick="runTest('check_system')"
+                   class="flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-surface-600 hover:text-white transition-colors">
+                  <i class="bi bi-cpu text-blue-400 mr-3"></i>
+                  <span>System Check</span>
+                </a>
+
+                <a href="javascript:void(0)"
+                   onclick="runTest('check_network')"
+                   class="flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-surface-600 hover:text-white transition-colors">
+                  <i class="bi bi-wifi text-green-400 mr-3"></i>
+                  <span>Network Check</span>
+                </a>
+
+                <a href="javascript:void(0)"
+                   onclick="runTest('check_modem')"
+                   class="flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-surface-600 hover:text-white transition-colors">
+                  <i class="bi bi-broadcast text-purple-400 mr-3"></i>
+                  <span>Modem Check</span>
+                </a>
+
+                <a href="javascript:void(0)"
+                   onclick="runTest('check_camera')"
+                   class="flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-surface-600 hover:text-white transition-colors">
+                  <i class="bi bi-camera text-blue-400 mr-3"></i>
+                  <span>Camera Check</span>
+                </a>
+
+                <a href="javascript:void(0)"
+                   onclick="runTest('check_power')"
+                   class="flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-surface-600 hover:text-white transition-colors">
+                  <i class="bi bi-battery-charging text-yellow-400 mr-3"></i>
+                  <span>Power Check</span>
+                </a>
+              </div>
+            </div>
+          </div>
+          </div>
         </div>
 
-        <div class="dropdown">
-          <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button"
-                  id="settingsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="bi bi-gear me-1"></i>
-          </button>
-          <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark" aria-labelledby="settingsDropdown">
-            <li><a class="dropdown-item" href="/settings">
-              <i class="bi bi-sliders me-1"></i>Settings
-            </a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="javascript:void(0)" onclick="clearAllCache()">
-              <i class="bi bi-trash me-1"></i>Clear Cache
-            </a></li>
-            <li><a class="dropdown-item" href="javascript:void(0)" onclick="reloadPage()">
-              <i class="bi bi-arrow-clockwise me-1"></i>Refresh Page
-            </a></li>
-          </ul>
+        <!-- Connection Status & Settings -->
+        <div class="flex items-center space-x-4">
+
+          <!-- Connection Status Badge -->
+          <div id="navbarConnectionStatus"
+               class="flex items-center px-4 py-2 bg-gradient-to-r from-surface-700 to-surface-800 border border-surface-600/50 rounded-xl text-sm font-medium transition-all duration-300 backdrop-blur-sm shadow-lg">
+            <span class="p-1 bg-white/10 rounded-lg mr-2">
+              <i class="bi bi-ethernet text-gray-400 text-xs"></i>
+            </span>
+            <span class="text-gray-300">Checking...</span>
+          </div>
+
+          <!-- Settings Dropdown -->
+          <div class="relative">
+            <button class="p-3 rounded-xl border border-surface-500/50 bg-gradient-to-r from-surface-700 to-surface-800 backdrop-blur-md text-gray-300 hover:bg-gradient-to-r hover:from-surface-600 hover:to-surface-700 hover:text-white hover:border-primary-400/50 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary-400 shadow-lg"
+                    onclick="toggleDropdown('settingsDropdown')">
+              <i class="bi bi-gear text-sm"></i>
+            </button>
+
+            <div id="settingsDropdown"
+                 class="hidden absolute right-0 mt-3 w-56 bg-gradient-to-b from-surface-800 to-surface-900 rounded-xl shadow-2xl border border-surface-600/50 backdrop-blur-xl z-50 overflow-hidden"
+                 style="box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
+
+              <a href="/settings"
+                 class="flex items-center px-4 py-3 text-gray-300 hover:bg-surface-600 hover:text-white transition-colors">
+                <i class="bi bi-sliders text-blue-400 mr-3"></i>
+                <span>Settings</span>
+              </a>
+
+              <div class="border-t border-surface-600"></div>
+
+              <a href="javascript:void(0)"
+                 onclick="clearAllCache()"
+                 class="flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-surface-600 hover:text-white transition-colors">
+                <i class="bi bi-trash text-yellow-400 mr-3"></i>
+                <span>Clear Cache</span>
+              </a>
+
+              <a href="javascript:void(0)"
+                 onclick="reloadPage()"
+                 class="flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-surface-600 hover:text-white transition-colors">
+                <i class="bi bi-arrow-clockwise text-green-400 mr-3"></i>
+                <span>Refresh Page</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Navigation Menu -->
+    <div id="mobile-nav" class="hidden md:hidden pb-4">
+      <div class="flex flex-col space-y-2 pt-4">
+
+        <!-- Mobile Navigation Links -->
+        <a href="/"
+           class="flex items-center space-x-2 px-3 py-2 rounded-lg transition-all hover:bg-surface-600 hover:text-white
+                  {% if request.path == '/' %}bg-primary-600 text-white{% else %}text-gray-300{% endif %}">
+          <i class="bi bi-speedometer2"></i>
+          <span>Dashboard</span>
+        </a>
+
+        <a href="/terminal"
+           class="flex items-center space-x-2 px-3 py-2 rounded-lg transition-all hover:bg-surface-600 hover:text-white
+                  {% if request.path == '/terminal' %}bg-primary-600 text-white{% else %}text-gray-300{% endif %}">
+          <i class="bi bi-terminal"></i>
+          <span>Terminal</span>
+        </a>
+
+        <a href="/mcu-uart"
+           class="flex items-center space-x-2 px-3 py-2 rounded-lg transition-all hover:bg-surface-600 hover:text-white
+                  {% if request.path == '/mcu-uart' %}bg-primary-600 text-white{% else %}text-gray-300{% endif %}">
+          <i class="bi bi-cpu"></i>
+          <span>MCU UART</span>
+        </a>
+
+        <!-- Mobile Diagnostics Section -->
+        <div class="pt-2">
+          <div class="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-2 px-3">Quick Tests</div>
+
+          <a href="javascript:void(0)"
+             onclick="runTest('full_diagnostics')"
+             class="flex items-center space-x-2 px-3 py-2 rounded-lg text-gray-300 hover:bg-surface-600 hover:text-white transition-colors">
+            <i class="bi bi-lightning-charge text-yellow-500"></i>
+            <span>Full System Scan</span>
+          </a>
+
+          <a href="javascript:void(0)"
+             onclick="runTest('check_system')"
+             class="flex items-center space-x-2 px-3 py-2 rounded-lg text-gray-300 hover:bg-surface-600 hover:text-white transition-colors">
+            <i class="bi bi-cpu text-blue-400"></i>
+            <span>System Check</span>
+          </a>
+
+          <a href="javascript:void(0)"
+             onclick="runTest('check_network')"
+             class="flex items-center space-x-2 px-3 py-2 rounded-lg text-gray-300 hover:bg-surface-600 hover:text-white transition-colors">
+            <i class="bi bi-wifi text-green-400"></i>
+            <span>Network Check</span>
+          </a>
+        </div>
+
+        <!-- Mobile Connection Status & Settings -->
+        <div class="pt-4 border-t border-surface-600 flex items-center justify-between">
+          <div id="mobileConnectionStatus"
+               class="flex items-center px-3 py-1 bg-surface-600 rounded-full text-sm">
+            <i class="bi bi-ethernet mr-2 text-gray-400"></i>
+            <span class="text-gray-300">Checking...</span>
+          </div>
+
+          <div class="flex space-x-2">
+            <a href="/settings"
+               class="p-2 rounded-lg border border-surface-500 text-gray-300 hover:bg-surface-600 hover:text-white transition-colors">
+              <i class="bi bi-sliders"></i>
+            </a>
+
+            <button onclick="clearAllCache()"
+                    class="p-2 rounded-lg border border-surface-500 text-gray-300 hover:bg-surface-600 hover:text-white transition-colors">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -79,25 +236,82 @@
 </nav>
 
 <script>
+  // State management
+  let openDropdown = null;
+
+  // Toggle mobile menu
+  function toggleMobileMenu() {
+    const mobileNav = document.getElementById('mobile-nav');
+    const toggleBtn = document.getElementById('mobile-menu-toggle');
+    const icon = toggleBtn.querySelector('i');
+
+    if (mobileNav.classList.contains('hidden')) {
+      mobileNav.classList.remove('hidden');
+      icon.classList.replace('bi-list', 'bi-x');
+    } else {
+      mobileNav.classList.add('hidden');
+      icon.classList.replace('bi-x', 'bi-list');
+    }
+  }
+
+  // Toggle dropdown menus
+  function toggleDropdown(dropdownId) {
+    const dropdown = document.getElementById(dropdownId);
+    const chevron = document.getElementById(dropdownId.replace('Dropdown', 'Chevron'));
+
+    // Close other dropdowns
+    if (openDropdown && openDropdown !== dropdownId) {
+      const otherDropdown = document.getElementById(openDropdown);
+      const otherChevron = document.getElementById(openDropdown.replace('Dropdown', 'Chevron'));
+      if (otherDropdown) {
+        otherDropdown.classList.add('hidden');
+        if (otherChevron) {
+          otherChevron.classList.remove('rotate-180');
+        }
+      }
+    }
+
+    // Toggle current dropdown
+    if (dropdown.classList.contains('hidden')) {
+      dropdown.classList.remove('hidden');
+      if (chevron) {
+        chevron.classList.add('rotate-180');
+      }
+      openDropdown = dropdownId;
+    } else {
+      dropdown.classList.add('hidden');
+      if (chevron) {
+        chevron.classList.remove('rotate-180');
+      }
+      openDropdown = null;
+    }
+  }
+
+  // Close dropdowns when clicking outside
+  document.addEventListener('click', function(event) {
+    if (openDropdown) {
+      const dropdown = document.getElementById(openDropdown);
+      const button = dropdown?.previousElementSibling;
+
+      if (dropdown && !dropdown.contains(event.target) && !button?.contains(event.target)) {
+        dropdown.classList.add('hidden');
+        const chevron = document.getElementById(openDropdown.replace('Dropdown', 'Chevron'));
+        if (chevron) {
+          chevron.classList.remove('rotate-180');
+        }
+        openDropdown = null;
+      }
+    }
+  });
+
   // Global function to clear all cached data
   function clearAllCache() {
     if (confirm('Clear all cached diagnostic data?')) {
       sessionStorage.clear();
       localStorage.removeItem('commandHistory');
 
-      // Show toast or alert
-      const alertDiv = document.createElement('div');
-      alertDiv.className = 'alert alert-success alert-dismissible fade show';
-      alertDiv.innerHTML = `
-        <i class="bi bi-check-circle me-2"></i>Cache cleared successfully
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-      `;
-
-      // Insert at the top of the container
-      const container = document.querySelector('.container, .container-fluid');
-      if (container) {
-        container.insertBefore(alertDiv, container.firstChild);
-      }
+      // Enhanced toast notification
+      showToast('Cache cleared successfully', 'success');
     }
   }
 
@@ -106,28 +320,130 @@
     window.location.reload();
   }
 
-  // Update the navbar connection status
-  function updateNavbarConnectionStatus(connected) {
-    const statusElement = document.getElementById('navbarConnectionStatus');
-    if (!statusElement) return;
+  // Enhanced toast notification system
+  function showToast(message, type = 'info', duration = 3000) {
+    const toastContainer = document.getElementById('toast-container') || createToastContainer();
 
-    if (connected) {
-      statusElement.style.backgroundColor = 'var(--accent-green)';
-      statusElement.innerHTML = '<i class="bi bi-ethernet me-1"></i><span>Connected</span>';
-    } else {
-      statusElement.style.backgroundColor = 'var(--accent-red)';
-      statusElement.innerHTML = '<i class="bi bi-ethernet-disconnect me-1"></i><span>Disconnected</span>';
-    }
+    const toast = document.createElement('div');
+    toast.className = `
+      fixed top-20 right-4 z-50 max-w-sm p-4 rounded-lg shadow-xl backdrop-blur-xl border transition-all duration-300 transform translate-x-full
+      ${type === 'success' ? 'bg-green-900/90 border-green-600 text-green-200' :
+        type === 'error' ? 'bg-red-900/90 border-red-600 text-red-200' :
+        'bg-blue-900/90 border-blue-600 text-blue-200'}
+    `;
+
+    const icon = type === 'success' ? 'bi-check-circle-fill' :
+                 type === 'error' ? 'bi-exclamation-triangle-fill' :
+                 'bi-info-circle-fill';
+
+    toast.innerHTML = `
+      <div class="flex items-center">
+        <i class="${icon} mr-2"></i>
+        <span>${message}</span>
+      </div>
+    `;
+
+    toastContainer.appendChild(toast);
+
+    // Trigger animation
+    setTimeout(() => {
+      toast.classList.remove('translate-x-full');
+    }, 100);
+
+    // Auto remove
+    setTimeout(() => {
+      toast.classList.add('translate-x-full');
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.remove();
+        }
+      }, 300);
+    }, duration);
   }
 
-  // Connect with global checkDeviceConnection function if it exists
+  function createToastContainer() {
+    const container = document.createElement('div');
+    container.id = 'toast-container';
+    container.className = 'fixed top-20 right-4 z-50 space-y-2';
+    document.body.appendChild(container);
+    return container;
+  }
+
+  // Enhanced navbar connection status update
+  function updateNavbarConnectionStatus(connected) {
+    const statusElements = [
+      document.getElementById('navbarConnectionStatus'),
+      document.getElementById('mobileConnectionStatus')
+    ];
+
+    statusElements.forEach(statusElement => {
+      if (!statusElement) return;
+
+      statusElement.className = `
+        flex items-center px-3 py-1 rounded-full text-sm font-medium transition-all border
+        ${connected ?
+          'bg-green-900/30 border-green-600 text-green-200 shadow-glow' :
+          'bg-red-900/30 border-red-600 text-red-200'}
+      `;
+
+      const icon = connected ? 'bi-ethernet' : 'bi-ethernet';
+      const text = connected ? 'Connected' : 'Disconnected';
+
+      statusElement.innerHTML = `
+        <i class="${icon} mr-2"></i>
+        <span>${text}</span>
+      `;
+    });
+  }
+
+  // Auto-hide navbar on scroll (optional enhancement)
+  let lastScrollTop = 0;
+  const navbar = document.querySelector('nav');
+
+  window.addEventListener('scroll', () => {
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+    if (scrollTop > lastScrollTop && scrollTop > 100) {
+      // Scrolling down
+      navbar.style.transform = 'translateY(-100%)';
+    } else {
+      // Scrolling up
+      navbar.style.transform = 'translateY(0)';
+    }
+
+    lastScrollTop = scrollTop;
+  });
+
+  // Global runTest function if not defined
+  if (typeof window.runTest !== 'function') {
+    window.runTest = function(testName) {
+      // Close mobile menu if open
+      const mobileNav = document.getElementById('mobile-nav');
+      if (mobileNav && !mobileNav.classList.contains('hidden')) {
+        toggleMobileMenu();
+      }
+
+      // Close any open dropdowns
+      if (openDropdown) {
+        toggleDropdown(openDropdown);
+      }
+
+      // Redirect to dashboard with test parameter
+      window.location.href = `/?test=${testName}`;
+    };
+  }
+
+  // Initialize on page load
   document.addEventListener('DOMContentLoaded', () => {
-    // If page has the connection check function
-    if (typeof checkDeviceConnection === 'function') {
-      // Initial status update
-      const originalUpdateConnectionDisplay = window.updateConnectionDisplay;
+    // Connect with global checkDeviceConnection function if it exists
+    // Skip connection checks on terminal page since it uses ttyd
+    if (typeof checkDeviceConnection === 'function' && window.location.pathname !== '/terminal') {
+      // Initial status check
+      checkDeviceConnection().then(updateNavbarConnectionStatus);
 
       // Override the connection display update to also update navbar
+      const originalUpdateConnectionDisplay = window.updateConnectionDisplay;
+
       window.updateConnectionDisplay = function(connected) {
         // Call the original function if it exists
         if (originalUpdateConnectionDisplay) {
@@ -139,12 +455,4 @@
       };
     }
   });
-
-  // Global runTest function if not defined
-  if (typeof window.runTest !== 'function') {
-    window.runTest = function(testName) {
-      // Redirect to dashboard with test parameter
-      window.location.href = `/?test=${testName}`;
-    };
-  }
 </script>

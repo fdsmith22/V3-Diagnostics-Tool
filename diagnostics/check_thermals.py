@@ -20,10 +20,10 @@ for zone in /sys/class/thermal/thermal_zone*; do
 done
 """
 
-output = run_ssh_command(command)
+result = run_ssh_command(command)
 
 # Print the formatted result
-if "Error" not in output:
-    print(output.strip())
+if result['success']:
+    print(result['output'].strip())
 else:
-    print(f"❌ Error retrieving thermal zones:\n{output}")
+    print(f"❌ Error retrieving thermal zones: {result['stderr']}")

@@ -1,0 +1,476 @@
+{% extends "base.html" %}
+
+{% block title %}MCU UART Diagnostics - V3 Diagnostics Tool{% endblock %}
+
+{% block description %}MCU UART hardware diagnostics interface for embedded systems testing{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/mcuUART.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="page-content animate-fade-in">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <!-- Header Section -->
+    <div class="card mb-6">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="bi bi-cpu-fill text-2xl"></i>
+                <h2 class="text-2xl md:text-3xl font-bold">MCU UART Diagnostics</h2>
+            </div>
+            <div class="flex flex-wrap gap-2" role="group">
+                <button id="runAllTests" class="btn btn-primary">
+                    <i class="bi bi-play-fill"></i>Run All Tests
+                </button>
+                <button id="stopTests" class="btn btn-danger" disabled>
+                    <i class="bi bi-stop-fill"></i>Stop
+                </button>
+                <button id="clearResults" class="btn btn-secondary">
+                    <i class="bi bi-trash"></i>Clear
+                </button>
+                <button id="checkConnection" class="btn btn-outline">
+                    <i class="bi bi-usb-symbol"></i>Check USB
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overall Progress Section -->
+    <div class="grid grid-cols-1 mb-6">
+        <div class="card animate-slide-in-left">
+            <div class="card-body">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h5 class="text-lg font-semibold text-white mb-2">Test Progress</h5>
+                        <p class="text-gray-300">
+                            <span id="testProgress" class="font-medium">0/0</span> tests completed
+                            <span id="testTime" class="text-gray-400 ml-4"></span>
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <svg class="progress-ring" width="60" height="60">
+                            <circle class="progress-ring-circle" 
+                                    stroke="rgba(255,255,255,0.1)" 
+                                    stroke-width="4" 
+                                    fill="transparent" 
+                                    r="26" 
+                                    cx="30" 
+                                    cy="30"/>
+                            <circle id="progressRingBar" 
+                                    class="progress-ring-circle" 
+                                    stroke="#3b82f6" 
+                                    stroke-width="4" 
+                                    fill="transparent" 
+                                    r="26" 
+                                    cx="30" 
+                                    cy="30" 
+                                    stroke-dasharray="0 163.36"/>
+                        </svg>
+                        <div class="text-center">
+                            <div id="overallStatus" class="badge bg-secondary">READY</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="progress mt-4" style="height: 8px;">
+                    <div id="progressBar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Real-time MCU Status Dashboard -->
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
+        <!-- System Status Card -->
+        <div class="card slide-in">
+            <div class="card-header">
+                <h6 class="text-sm font-semibold"><i class="bi bi-cpu text-blue-400 me-2"></i>System Status</h6>
+            </div>
+            <div class="card-body p-4">
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-gray-400 text-sm">CPU Load:</span>
+                        <span id="mcu-cpu" class="text-white font-mono">--</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400 text-sm">Memory:</span>
+                        <span id="mcu-memory" class="text-white font-mono">--</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400 text-sm">Uptime:</span>
+                        <span id="mcu-uptime" class="text-white font-mono">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Temperature Card -->
+        <div class="card slide-in">
+            <div class="card-header">
+                <h6 class="text-sm font-semibold"><i class="bi bi-thermometer text-red-400 me-2"></i>Temperature</h6>
+            </div>
+            <div class="card-body p-4">
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-gray-400 text-sm">MCU Die:</span>
+                        <span id="temp-mcu" class="text-white font-mono">--°C</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400 text-sm">Ambient:</span>
+                        <span id="temp-ambient" class="text-white font-mono">--°C</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400 text-sm">Status:</span>
+                        <span id="temp-status" class="text-green-400 text-sm">Normal</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- GPIO Expanders Card -->
+        <div class="card slide-in">
+            <div class="card-header">
+                <h6 class="text-sm font-semibold"><i class="bi bi-diagram-2 text-purple-400 me-2"></i>GPIO Expanders</h6>
+            </div>
+            <div class="card-body p-4">
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-gray-400 text-sm">U20 (0x20):</span>
+                        <span id="gpio-u20" class="text-white font-mono">--</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400 text-sm">U23 (0x24):</span>
+                        <span id="gpio-u23" class="text-white font-mono">--</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400 text-sm">Mode:</span>
+                        <span class="text-green-400 text-sm">Active</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- I2C Devices Card -->
+        <div class="card slide-in">
+            <div class="card-header">
+                <h6 class="text-sm font-semibold"><i class="bi bi-diagram-3 text-cyan-400 me-2"></i>I2C Devices</h6>
+            </div>
+            <div class="card-body p-4">
+                <div class="space-y-2">
+                    <div class="flex justify-between">
+                        <span class="text-gray-400 text-sm">I2C1:</span>
+                        <span id="i2c-bus1" class="text-white text-sm">--</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400 text-sm">I2C2:</span>
+                        <span id="i2c-bus2" class="text-white text-sm">--</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400 text-sm">I2C3:</span>
+                        <span id="i2c-bus3" class="text-white text-sm">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test Categories Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        
+        <!-- Connectivity Tests -->
+        <div class="card h-full slide-in">
+            <div class="card-header">
+                <h5><i class="bi bi-router text-blue-400 me-2"></i>Connectivity Tests</h5>
+            </div>
+            <div class="card-body p-4">
+                
+                <!-- UART Connection Test -->
+                <div id="test-uart-connection" class="test-card">
+                    <div class="card-body p-4">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center">
+                                <div class="test-status status-pending">
+                                    <i class="bi bi-circle-fill text-white" style="font-size: 8px;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-white font-semibold mb-1">UART Connection</h6>
+                                    <small class="text-gray-400">PING/PONG test</small>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline-primary btn-sm" onclick="runSingleTest('uart-connection')">
+                                <i class="bi bi-play-fill"></i>
+                            </button>
+                        </div>
+                        <div class="test-result mt-3" style="display: none;">
+                            <small class="text-gray-400">Result: <span class="result-text text-white"></span></small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Firmware Version Test -->
+                <div id="test-firmware-version" class="test-card">
+                    <div class="card-body p-4">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center">
+                                <div class="test-status status-pending">
+                                    <i class="bi bi-circle-fill text-white" style="font-size: 8px;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-white font-semibold mb-1">Firmware Version</h6>
+                                    <small class="text-gray-400">MCU firmware info</small>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline-primary btn-sm" onclick="runSingleTest('firmware-version')">
+                                <i class="bi bi-play-fill"></i>
+                            </button>
+                        </div>
+                        <div class="test-result mt-3" style="display: none;">
+                            <small class="text-gray-400">Version: <span class="result-text text-white"></span></small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Uptime Test -->
+                <div id="test-system-uptime" class="test-card">
+                    <div class="card-body p-4">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center">
+                                <div class="test-status status-pending">
+                                    <i class="bi bi-circle-fill text-white" style="font-size: 8px;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-white font-semibold mb-1">System Uptime</h6>
+                                    <small class="text-gray-400">Time since boot</small>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline-primary btn-sm" onclick="runSingleTest('system-uptime')">
+                                <i class="bi bi-play-fill"></i>
+                            </button>
+                        </div>
+                        <div class="test-result mt-3" style="display: none;">
+                            <small class="text-gray-400">Uptime: <span class="result-text text-white"></span></small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Power System Tests -->
+        <div class="card h-full slide-in">
+            <div class="card-header">
+                <h5><i class="bi bi-lightning-charge text-yellow-400 me-2"></i>Power System Tests</h5>
+            </div>
+            <div class="card-body p-4">
+                
+                <!-- Voltage Rails Test -->
+                <div id="test-voltage-rails" class="test-card">
+                    <div class="card-body p-4">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center">
+                                <div class="test-status status-pending">
+                                    <i class="bi bi-circle-fill text-white" style="font-size: 8px;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-white font-semibold mb-1">Voltage Rails</h6>
+                                    <small class="text-gray-400">8-channel ADC monitoring</small>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline-primary btn-sm" onclick="runSingleTest('voltage-rails')">
+                                <i class="bi bi-play-fill"></i>
+                            </button>
+                        </div>
+                        <div class="test-result mt-3" style="display: none;">
+                            <div class="voltage-readings">
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <small class="text-gray-400">3.3V SYS (TP6): <span id="voltage-3v3-sys" class="text-white">-</span>V</small>
+                                        <div class="voltage-meter mb-2">
+                                            <div class="voltage-indicator" id="indicator-3v3-sys"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <small class="text-gray-400">3.3V MCU (TP7): <span id="voltage-3v3-mcu" class="text-white">-</span>V</small>
+                                        <div class="voltage-meter mb-2">
+                                            <div class="voltage-indicator" id="indicator-3v3-mcu"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <small class="text-gray-400">5V PERIPH (TP9): <span id="voltage-5v-periph" class="text-white">-</span>V</small>
+                                        <div class="voltage-meter mb-2">
+                                            <div class="voltage-indicator" id="indicator-5v-periph"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <small class="text-gray-400">12V INPUT (TP1): <span id="voltage-12v-input" class="text-white">-</span>V</small>
+                                        <div class="voltage-meter mb-2">
+                                            <div class="voltage-indicator" id="indicator-12v-input"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <small class="text-gray-400">5V MAIN (TP2): <span id="voltage-5v-main" class="text-white">-</span>V</small>
+                                        <div class="voltage-meter mb-2">
+                                            <div class="voltage-indicator" id="indicator-5v-main"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <small class="text-gray-400">BATT V (TP4): <span id="voltage-batt-voltage" class="text-white">-</span>V</small>
+                                        <div class="voltage-meter mb-2">
+                                            <div class="voltage-indicator" id="indicator-batt-voltage"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Temperature Test -->
+                <div id="test-temperature" class="test-card">
+                    <div class="card-body p-4">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center">
+                                <div class="test-status status-pending">
+                                    <i class="bi bi-circle-fill text-white" style="font-size: 8px;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-white font-semibold mb-1">MCU Temperature</h6>
+                                    <small class="text-gray-400">Internal die temperature</small>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline-primary btn-sm" onclick="runSingleTest('temperature')">
+                                <i class="bi bi-play-fill"></i>
+                            </button>
+                        </div>
+                        <div class="test-result mt-3" style="display: none;">
+                            <small class="text-gray-400">Temperature: <span class="result-text text-white"></span>°C</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Battery System Test -->
+                <div id="test-battery-system" class="test-card">
+                    <div class="card-body p-4">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center">
+                                <div class="test-status status-pending">
+                                    <i class="bi bi-circle-fill text-white" style="font-size: 8px;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-white font-semibold mb-1">Battery System</h6>
+                                    <small class="text-gray-400">Charger diagnostics</small>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline-primary btn-sm" onclick="runSingleTest('battery-system')">
+                                <i class="bi bi-play-fill"></i>
+                            </button>
+                        </div>
+                        <div class="test-result mt-3" style="display: none;">
+                            <small class="text-gray-400">Status: <span class="result-text text-white"></span></small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Grid: Hardware Control Tests & Diagnostic Log -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <!-- Hardware Control Tests -->
+        <div class="card h-full slide-in">
+            <div class="card-header">
+                <h5><i class="bi bi-gear text-green-400 me-2"></i>Hardware Control Tests</h5>
+            </div>
+            <div class="card-body p-4">
+                
+                <!-- Switch States Test -->
+                <div id="test-switch-states" class="test-card">
+                    <div class="card-body p-4">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center">
+                                <div class="test-status status-pending">
+                                    <i class="bi bi-circle-fill text-white" style="font-size: 8px;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-white font-semibold mb-1">Switch States</h6>
+                                    <small class="text-gray-400">Power domain control</small>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline-primary btn-sm" onclick="runSingleTest('switch-states')">
+                                <i class="bi bi-play-fill"></i>
+                            </button>
+                        </div>
+                        <div class="test-result mt-3" style="display: none;">
+                            <small class="text-gray-400">Domains: <span class="result-text text-white"></span></small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PWM Control Test -->
+                <div id="test-pwm-control" class="test-card">
+                    <div class="card-body p-4">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center">
+                                <div class="test-status status-pending">
+                                    <i class="bi bi-circle-fill text-white" style="font-size: 8px;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-white font-semibold mb-1">PWM Control</h6>
+                                    <small class="text-gray-400">LED and signal generation</small>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline-primary btn-sm" onclick="runSingleTest('pwm-control')">
+                                <i class="bi bi-play-fill"></i>
+                            </button>
+                        </div>
+                        <div class="test-result mt-3" style="display: none;">
+                            <small class="text-gray-400">Channels: <span class="result-text text-white"></span></small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- I2C Communication Test -->
+                <div id="test-i2c-communication" class="test-card">
+                    <div class="card-body p-4">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center">
+                                <div class="test-status status-pending">
+                                    <i class="bi bi-circle-fill text-white" style="font-size: 8px;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-white font-semibold mb-1">I2C Communication</h6>
+                                    <small class="text-gray-400">Peripheral bus test</small>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline-primary btn-sm" onclick="runSingleTest('i2c-communication')">
+                                <i class="bi bi-play-fill"></i>
+                            </button>
+                        </div>
+                        <div class="test-result mt-3" style="display: none;">
+                            <small class="text-gray-400">Devices: <span class="result-text text-white"></span></small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Diagnostic Log -->
+        <div class="card h-full slide-in">
+            <div class="card-header flex justify-between items-center">
+                <h5><i class="bi bi-terminal text-purple-400 me-2"></i>Diagnostic Log</h5>
+                <button id="clearLog" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-eraser"></i> Clear
+                </button>
+            </div>
+            <div class="card-body p-0">
+                <div id="diagnosticLog" class="log-output">
+                    <div class="text-gray-400">Ready for diagnostic tests...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/mcuUART.js') }}"></script>
+{% endblock %}

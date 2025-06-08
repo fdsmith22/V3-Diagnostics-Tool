@@ -1,0 +1,302 @@
+/*
+ * MCU UART Diagnostics CSS
+ * Modern dark theme matching V3 Diagnostics Tool
+ * Extends the main styles.css design system
+ */
+
+/* =============================================================================
+   MCU UART SPECIFIC VARIABLES
+   ============================================================================= */
+
+:root {
+    /* Status colors for MCU tests */
+    --status-pending: var(--color-surface-500);
+    --status-running: var(--color-warning-500);
+    --status-passed: var(--color-success-500);
+    --status-failed: var(--color-error-500);
+    
+    /* Voltage meter colors */
+    --voltage-low: var(--color-error-500);
+    --voltage-mid: var(--color-warning-500);
+    --voltage-high: var(--color-success-500);
+}
+
+/* =============================================================================
+   TEST CARDS
+   ============================================================================= */
+
+.test-card {
+    transition: all var(--duration-base) var(--ease-out);
+    border-left: 4px solid var(--status-pending);
+    margin-bottom: var(--space-4);
+    background: linear-gradient(135deg, var(--bg-card), var(--color-surface-700));
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.test-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.test-card.running {
+    border-left-color: var(--status-running);
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), var(--color-surface-700));
+    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.2);
+}
+
+.test-card.passed {
+    border-left-color: var(--status-passed);
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), var(--color-surface-700));
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.2);
+}
+
+.test-card.failed {
+    border-left-color: var(--status-failed);
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), var(--color-surface-700));
+    box-shadow: 0 4px 16px rgba(239, 68, 68, 0.2);
+}
+
+/* =============================================================================
+   TEST STATUS INDICATORS
+   ============================================================================= */
+
+.test-status {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: var(--space-3);
+    transition: all var(--duration-base) var(--ease-out);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.status-pending { 
+    background: linear-gradient(135deg, var(--status-pending), var(--color-surface-400));
+}
+
+.status-running { 
+    background: linear-gradient(135deg, var(--status-running), var(--color-warning-400));
+    animation: pulse-running 2s infinite;
+}
+
+.status-passed { 
+    background: linear-gradient(135deg, var(--status-passed), var(--color-success-400));
+}
+
+.status-failed { 
+    background: linear-gradient(135deg, var(--status-failed), var(--color-error-400));
+}
+
+@keyframes pulse-running {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.1); }
+}
+
+/* =============================================================================
+   VOLTAGE METERS
+   ============================================================================= */
+
+.voltage-meter {
+    height: 24px;
+    background: linear-gradient(90deg, var(--voltage-low) 0%, var(--voltage-mid) 50%, var(--voltage-high) 100%);
+    border-radius: var(--radius-xl);
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.voltage-indicator {
+    position: absolute;
+    top: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg, #ffffff, #e5e7eb);
+    transition: left 0.5s ease;
+    border-radius: 2px;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+}
+
+.voltage-readings .col-6 {
+    margin-bottom: var(--space-3);
+}
+
+.voltage-readings small {
+    font-size: var(--text-xs);
+    color: var(--color-surface-400);
+    font-weight: 500;
+}
+
+/* =============================================================================
+   PROGRESS INDICATORS
+   ============================================================================= */
+
+.progress-ring {
+    transform: rotate(-90deg);
+}
+
+.progress-ring-circle {
+    transition: stroke-dasharray 0.6s ease;
+    filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.3));
+}
+
+/* =============================================================================
+   LOG OUTPUT
+   ============================================================================= */
+
+.log-output {
+    background: linear-gradient(145deg, var(--color-terminal-bg), var(--color-terminal-bg-secondary));
+    color: var(--mcu-text-primary);
+    font-family: 'Fira Code', 'Cascadia Code', 'Courier New', monospace;
+    font-size: var(--text-sm);
+    max-height: 350px;
+    overflow-y: auto;
+    padding: var(--space-5);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-surface);
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
+    line-height: 1.5;
+}
+
+.log-output::-webkit-scrollbar {
+    width: 8px;
+}
+
+.log-output::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
+
+.log-output::-webkit-scrollbar-thumb {
+    background: var(--color-surface-600);
+    border-radius: 4px;
+}
+
+.log-output::-webkit-scrollbar-thumb:hover {
+    background: var(--color-surface-500);
+}
+
+/* Log message colors */
+.text-success { color: var(--color-success-500) !important; }
+.text-warning { color: var(--color-warning-500) !important; }
+.text-danger { color: var(--color-error-500) !important; }
+.text-muted { color: var(--color-surface-400) !important; }
+
+/* =============================================================================
+   RESULT DISPLAYS
+   ============================================================================= */
+
+.test-result {
+    margin-top: var(--space-3);
+    padding-top: var(--space-3);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.result-text {
+    font-weight: 600;
+    color: white;
+}
+
+/* =============================================================================
+   MCU SPECIFIC BADGES
+   ============================================================================= */
+
+.bg-secondary {
+    background: linear-gradient(135deg, var(--color-surface-600), var(--color-surface-500)) !important;
+    color: white;
+}
+
+.bg-warning {
+    background: linear-gradient(135deg, var(--color-warning-600), var(--color-warning-500)) !important;
+    color: white;
+}
+
+.bg-success {
+    background: linear-gradient(135deg, var(--color-success-600), var(--color-success-500)) !important;
+    color: white;
+}
+
+.bg-danger {
+    background: linear-gradient(135deg, var(--color-error-600), var(--color-error-500)) !important;
+    color: white;
+}
+
+/* =============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================= */
+
+@media (max-width: 768px) {
+    .voltage-readings .col-6 {
+        margin-bottom: var(--space-4);
+    }
+    
+    .log-output {
+        max-height: 250px;
+        font-size: var(--text-xs);
+        padding: var(--space-4);
+    }
+    
+    .test-status {
+        width: 20px;
+        height: 20px;
+        margin-right: var(--space-2);
+    }
+}
+
+/* =============================================================================
+   ANIMATIONS
+   ============================================================================= */
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.test-card {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+.slide-in {
+    animation: slideInLeft 0.6s ease-out;
+}
+
+/* =============================================================================
+   UTILITY CLASSES
+   ============================================================================= */
+
+.text-primary-custom {
+    color: var(--color-primary-400) !important;
+}
+
+.bg-transparent-custom {
+    background: rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(5px);
+}
+
+.border-custom {
+    border-color: var(--border-surface) !important;
+}
+
+.shadow-custom {
+    box-shadow: var(--shadow-md) !important;
+}

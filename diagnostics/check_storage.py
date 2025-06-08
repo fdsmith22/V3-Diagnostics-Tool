@@ -3,4 +3,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from utils.ssh_interface import run_ssh_command
 
 print("Disk Usage:")
-print(run_ssh_command("df -h"))
+result = run_ssh_command("df -h")
+if result['success']:
+    print(result['output'])
+else:
+    print(f"❌ Error: {result['stderr']}")

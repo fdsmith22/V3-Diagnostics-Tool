@@ -46,8 +46,8 @@ pip install -r requirements.txt
 Create a `.env` file with your SSH credentials:
 ```bash
 # SSH Connection Settings
-SSH_HOST=192.168.55.1
-SSH_USERNAME=ubuntu
+SSH_HOST=<target_ip>
+SSH_USERNAME=<target_user>
 SSH_PASSWORD=your_password
 
 # Flask Application Settings

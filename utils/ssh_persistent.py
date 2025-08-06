@@ -34,7 +34,7 @@ class PersistentSSHConnection:
         self.lock = threading.Lock()
         
         # Connection settings
-        self.connection_timeout = 30  # 30 seconds for connection
+        self.connection_timeout = 3   # 3 seconds for connection (reduced from 30)
         self.command_timeout = 60     # 60 seconds for commands by default
         self.keepalive_interval = 5   # Send keepalive every 5 seconds
         
@@ -174,11 +174,24 @@ class PersistentSSHConnection:
             return False, f"Error: {str(e)}"
     
     def check_connection(self) -> Tuple[bool, str]:
-        """Quick connection check."""
-        success, output = self.execute_command("echo ok", timeout=5)
-        if success and output == "ok":
-            return True, "Connection active"
-        return False, "Connection failed"
+        """Quick connection check without blocking."""
+        # First check if we think we're connected without actually testing
+        if not self.connected or not self.client:
+            return False, "Not connected (no active session)"
+        
+        # Try to check transport without executing command
+        try:
+            transport = self.client.get_transport()
+            if transport and transport.is_active():
+                # Only do actual test if transport seems active
+                success, output = self.execute_command("echo ok", timeout=2)
+                if success and output == "ok":
+                    return True, "Connection active"
+        except:
+            pass
+        
+        self.connected = False
+        return False, "Connection lost"
     
     def __del__(self):
         """Clean up connection on deletion."""

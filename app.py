@@ -427,7 +427,10 @@ def start_terminal():
         time.sleep(0.5)  # Give it time to clean up
         
         # Start ttyd in background with proper environment
-        script_path = Path(__file__).parent / 'start_ttyd.sh'
+        # Try safe version first, fallback to regular
+        script_path = Path(__file__).parent / 'start_ttyd_safe.sh'
+        if not script_path.exists():
+            script_path = Path(__file__).parent / 'start_ttyd.sh'
         if script_path.exists():
             # Load environment variables from .env
             from dotenv import load_dotenv

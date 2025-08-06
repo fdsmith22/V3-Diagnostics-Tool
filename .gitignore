@@ -1,4 +1,97 @@
-.env
-venv/
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+ENV/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.claude/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Build files
+static/css/styles.css
+static/styles.min.css
+
+# Operating System
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+*.cache
+*.pid
+nohup.out
+
+# SSH keys and certificates
+*.key
+*.pem
+*.crt
+*.cer
+id_rsa*
+id_dsa*
+id_ecdsa*
+id_ed25519*
+known_hosts
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Uploads folder (may contain user data)
+uploads/*
+!uploads/.gitkeep
+
+# Test files
+test_*.py
+*_test.py
+test_*.html
+
+# Session files
+flask_session/
+sessions/
+
+# Compiled CSS from SASS/SCSS
+*.css.map

@@ -1,38 +1,207 @@
-<div class="container px-0">
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 shadow-sm rounded">
-    <div class="container-fluid">
-      <a class="navbar-brand fw-bold" href="/">🔧 V3 Diagnostics Tool</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
+<!-- Enhanced Navbar -->
+<link href="{{ url_for('static', filename='css/navbar-enhanced.css') }}" rel="stylesheet">
 
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav ms-auto" id="navLinks">
-          <li class="nav-item">
-            <a class="nav-link" href="/" data-path="/">Diagnostics</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="/terminal" data-path="/terminal">Terminal</a>
-          </li>
-          <!-- Future items:
-          <li class="nav-item">
-            <a class="nav-link" href="/logs" data-path="/logs">Logs</a>
-          </li>
-          -->
-        </ul>
-      </div>
+<nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+    <div class="container-fluid px-4">
+        <!-- Brand -->
+        <a class="navbar-brand d-flex align-items-center" href="{{ url_for('index') }}">
+            <span class="material-icons me-2">build</span>
+            <span class="brand-text">V3 Diagnostics Tool</span>
+        </a>
+
+        <!-- Mobile Toggle -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+                aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Navigation Content -->
+        <div class="collapse navbar-collapse" id="navbarContent">
+            <!-- Main Navigation -->
+            <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link {{ 'active' if request.endpoint == 'index' }}"
+                       href="{{ url_for('index') }}">
+                        <i class="material-icons me-1 d-none d-lg-inline" style="font-size: 18px;">dashboard</i>
+                        Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ 'active' if request.endpoint == 'terminal' }}"
+                       href="{{ url_for('terminal') }}">
+                        <i class="material-icons me-1 d-none d-lg-inline" style="font-size: 18px;">terminal</i>
+                        Terminal
+                    </a>
+                </li>
+            </ul>
+
+            <!-- Right Side Items -->
+            <div class="d-flex align-items-center gap-3">
+                <!-- System Time Display -->
+                <div class="d-none d-lg-flex align-items-center text-muted small">
+                    <i class="material-icons me-1" style="font-size: 16px;">schedule</i>
+                    <span id="system-time">--:--:--</span>
+                </div>
+
+                <!-- Connection Status -->
+                <button id="connectionStatus"
+                        onclick="checkConnection()"
+                        class="btn btn-danger btn-sm"
+                        data-bs-toggle="tooltip"
+                        data-bs-placement="bottom"
+                        title="Click to check connection"
+                        disabled>
+                    <span class="d-flex align-items-center">
+                        <span class="material-icons me-1" style="font-size: 16px;">fiber_manual_record</span>
+                        <span id="connectionText" aria-live="polite">Checking...</span>
+                    </span>
+                </button>
+            </div>
+        </div>
     </div>
-  </nav>
-</div>
+</nav>
 
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const currentPath = window.location.pathname;
-    document.querySelectorAll('#navLinks .nav-link').forEach(link => {
-      if (link.getAttribute('data-path') === currentPath) {
-        link.classList.add('active');
-      }
+// System Time Display
+function updateSystemTime() {
+    const timeElement = document.getElementById('system-time');
+    if (timeElement) {
+        const now = new Date();
+        timeElement.textContent = now.toLocaleTimeString();
+    }
+}
+
+// Connection Check Function
+async function checkConnection() {
+    const statusButton = document.getElementById('connectionStatus');
+    const statusText = document.getElementById('connectionText');
+    
+    // Show checking state
+    statusButton.classList.remove('btn-success', 'btn-danger');
+    statusButton.classList.add('btn-warning');
+    statusText.textContent = 'Checking...';
+    statusButton.disabled = true;
+
+    try {
+        const response = await fetch('/api/system/check-connection');
+        const data = await response.json();
+
+        if (data.status === 'success' && data.connected) {
+            // Connected state
+            statusButton.classList.remove('btn-danger', 'btn-warning');
+            statusButton.classList.add('btn-success');
+            statusText.textContent = 'Connected';
+            statusButton.setAttribute('title', `Connected to ${data.device || 'device'}`);
+            
+            // Add success animation
+            statusButton.style.animation = 'none';
+            setTimeout(() => {
+                statusButton.style.animation = '';
+            }, 10);
+        } else {
+            // Disconnected state
+            statusButton.classList.remove('btn-success', 'btn-warning');
+            statusButton.classList.add('btn-danger');
+            statusText.textContent = 'Disconnected';
+            statusButton.setAttribute('title', 'Click to check connection');
+        }
+    } catch (error) {
+        console.error('Connection check failed:', error);
+        statusButton.classList.remove('btn-success', 'btn-warning');
+        statusButton.classList.add('btn-danger');
+        statusText.textContent = 'Error';
+        statusButton.setAttribute('title', 'Connection check failed');
+    } finally {
+        statusButton.disabled = false;
+    }
+}
+
+// Auto-refresh connection status
+let connectionCheckInterval = null;
+
+function startConnectionMonitoring() {
+    // Initial check
+    checkConnection();
+    
+    // Clear any existing interval
+    if (connectionCheckInterval) {
+        clearInterval(connectionCheckInterval);
+    }
+    
+    // Check every 30 seconds
+    connectionCheckInterval = setInterval(checkConnection, 30000);
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    const tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    tooltips.forEach(el => new bootstrap.Tooltip(el));
+    
+    // Start time display
+    updateSystemTime();
+    setInterval(updateSystemTime, 1000);
+    
+    // Start connection monitoring
+    startConnectionMonitoring();
+    
+    // Add navbar scroll effect
+    let lastScrollTop = 0;
+    window.addEventListener('scroll', function() {
+        const navbar = document.querySelector('.navbar');
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        
+        if (scrollTop > lastScrollTop && scrollTop > 100) {
+            // Scrolling down
+            navbar.style.transform = 'translateY(-100%)';
+        } else {
+            // Scrolling up
+            navbar.style.transform = 'translateY(0)';
+        }
+        
+        // Add shadow on scroll
+        if (scrollTop > 10) {
+            navbar.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.5), 0 1px 0 rgba(124, 119, 255, 0.1) inset';
+        } else {
+            navbar.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.3), 0 1px 0 rgba(124, 119, 255, 0.1) inset';
+        }
+        
+        lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
+    }, false);
+});
+
+// Page visibility handling
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+        // Page is hidden, stop checking
+        if (connectionCheckInterval) {
+            clearInterval(connectionCheckInterval);
+        }
+    } else {
+        // Page is visible again, resume checking
+        startConnectionMonitoring();
+    }
+});
+
+// WebSocket integration for real-time updates (if available)
+if (typeof io !== 'undefined') {
+    const socket = io();
+    
+    socket.on('connection_status', function(data) {
+        const statusButton = document.getElementById('connectionStatus');
+        const statusText = document.getElementById('connectionText');
+        
+        if (data.connected) {
+            statusButton.classList.remove('btn-danger', 'btn-warning');
+            statusButton.classList.add('btn-success');
+            statusText.textContent = 'Connected';
+            statusButton.setAttribute('title', `Connected to ${data.device || 'device'}`);
+        } else {
+            statusButton.classList.remove('btn-success', 'btn-warning');
+            statusButton.classList.add('btn-danger');
+            statusText.textContent = 'Disconnected';
+            statusButton.setAttribute('title', 'Click to check connection');
+        }
     });
-  });
+}
 </script>

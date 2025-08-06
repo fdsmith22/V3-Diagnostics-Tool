@@ -1,253 +1,339 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>V3 Diagnostics Tool</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-</head>
+{% extends "base.html" %}
 
-<body class="p-4">
-  <div class="container">
-    {% include 'navbar.html' %}
+{% block title %}V3 Diagnostics Dashboard{% endblock %}
 
-    <!-- Status Banner -->
-    <div class="mb-4">
-      <div id="statusBanner" class="p-3 rounded text-white text-center" style="background-color: #0d6efd;">
-        Ready to run diagnostics
-      </div>
+{% block styles %}
+{{ super() }}
+<link href="{{ url_for('static', filename='css/dashboard-enhanced.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">System Dashboard</h1>
+        <button class="btn btn-refresh" id="refresh-status">
+            <i class="material-icons align-middle">refresh</i>
+            <span class="d-none d-sm-inline ms-1">Refresh</span>
+        </button>
     </div>
 
-    <!-- Device Connection Status -->
-    <div class="mb-4">
-      <button id="connectionStatus" class="btn btn-danger connected-btn" onclick="checkDeviceConnection()">Disconnected</button>
+    <!-- Compact Status Cards Row -->
+    <div class="row g-3 mb-4">
+        <!-- Connection Status -->
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="status-card-compact">
+                <div class="status-card-icon">
+                    <i class="material-icons">wifi</i>
+                </div>
+                <div class="status-card-content">
+                    <div class="status-card-title">Connection</div>
+                    <div class="connection-indicator disconnected" id="connection-status">
+                        <span class="pulse"></span>
+                        <span class="status-text">Disconnected</span>
+                    </div>
+                    <div class="status-card-subtitle" id="connection-message">No device connected</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Battery Status -->
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="status-card-compact">
+                <div class="status-card-icon">
+                    <i class="material-icons">battery_charging_full</i>
+                </div>
+                <div class="status-card-content">
+                    <div class="status-card-title">Battery</div>
+                    <div class="battery-display">
+                        <div class="battery-visual">
+                            <div class="battery-fill low" id="battery-fill" style="width: 0%"></div>
+                        </div>
+                        <span class="battery-percent" id="battery-percent">0%</span>
+                    </div>
+                    <div class="status-card-subtitle" id="battery-status">No battery</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Temperature -->
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="status-card-compact">
+                <div class="status-card-icon">
+                    <i class="material-icons">thermostat</i>
+                </div>
+                <div class="status-card-content">
+                    <div class="status-card-title">Temperature</div>
+                    <div class="temp-display">
+                        <span class="temp-value" id="temp-value">--</span>
+                        <span class="temp-unit">°C</span>
+                        <span class="temp-status normal" id="temp-status">Normal</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Network/Uptime -->
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="status-card-compact">
+                <div class="status-card-icon">
+                    <i class="material-icons">access_time</i>
+                </div>
+                <div class="status-card-content">
+                    <div class="status-card-title">Uptime</div>
+                    <div class="uptime-display">
+                        <span class="uptime-value" id="uptime-value">--</span>
+                        <span class="status-card-subtitle" id="last-update">Last updated: --</span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Camera Status -->
-    <div id="cameraStatus" class="alert alert-info d-none" role="alert">
-      <strong>Camera Status:</strong> <span id="cameraChecked">Checked: 0</span> | <span id="cameraFound">Found: 0</span>
+    <!-- System Information Card -->
+    <div class="system-info-card card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="material-icons align-middle me-2">info</i>
+                System Information
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <tbody>
+                        <tr>
+                            <th style="width: 200px;">Device ID</th>
+                            <td id="device-id">--</td>
+                        </tr>
+                        <tr>
+                            <th>Firmware Version</th>
+                            <td id="firmware-version">--</td>
+                        </tr>
+                        <tr>
+                            <th>Processor</th>
+                            <td id="processor">--</td>
+                        </tr>
+                        <tr>
+                            <th>IP Address</th>
+                            <td id="ip-address-table">--</td>
+                        </tr>
+                        <tr>
+                            <th>Network Interface</th>
+                            <td id="network-interface">--</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
-    <!-- Stack Identity Info -->
-    <div class="mb-4">
-      <div class="card">
+    <!-- Diagnostic Test Log Container -->
+    <div class="diagnostic-log-card card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="material-icons align-middle me-2">assignment</i>
+                Diagnostic Test Results
+            </h5>
+        </div>
         <div class="card-body">
-          <strong>Connected Stack Info:</strong><br>
-          <div><strong>HWID:</strong> <span id="hwid">—</span></div>
-          <div><strong>IP Address:</strong> <span id="ip">—</span></div>
-          <div><strong>Uptime:</strong> <span id="uptime">—</span></div>
-          <div><strong>MAC Address:</strong> <span id="macAddress">—</span></div>
+            <div id="diagnostic-results" class="diagnostic-results-container">
+                <div class="text-center text-muted py-4">
+                    <i class="material-icons mb-2" style="font-size: 48px; opacity: 0.3;">science</i>
+                    <p>Click "Run Tests" to start diagnostic checks</p>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
+</div>
+{% endblock %}
 
-    <!-- Issue Log -->
-    <div id="issueLog" class="alert alert-warning d-none" role="alert">
-      <strong>Issues detected:</strong>
-      <ul id="issueList" class="mb-0"></ul>
-    </div>
+{% block scripts %}
+{{ super() }}
+<script>
+// Dashboard update functionality
+(function() {
+    let updateTimer = null;
+    const UPDATE_INTERVAL = 15000; // 15 seconds
 
-    <!-- Run All Button -->
-    <div class="mb-3">
-      <button class="btn btn-success me-2" onclick="runTest('full_diagnostics')">Run Full System Diagnostic</button>
-    </div>
-
-    <!-- Toggle Individual Tests -->
-    <div class="mb-4">
-      <h5>
-        <a class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" href="#advancedTests" role="button" aria-expanded="false" aria-controls="advancedTests">
-          Show/Hide Individual Tests
-        </a>
-      </h5>
-      <div class="collapse" id="advancedTests">
-        <div class="card card-body">
-          {% for test in [
-            'check_power', 'check_network', 'check_sim', 'check_logs', 'check_system',
-            'check_storage', 'check_memory', 'check_interfaces', 'check_modem',
-            'check_i2c', 'check_usb', 'check_camera', 'check_thermals',
-            'check_cpuinfo', 'check_memory_extended', 'check_disk_health', 'check_dmesg_critical'
-          ] %}
-            <button class="btn btn-secondary me-2 mb-2" onclick="runTest('{{ test }}')">{{ test.replace('_', ' ').title() }}</button>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
-
-    <!-- Output Panel -->
-    <div>
-      <h5>Test Output</h5>
-      <div id="output" class="output-box p-3 border bg-white rounded" style="min-height: 200px;"></div>
-    </div>
-  </div>
-
-  <script>
-    let isDeviceConnected = false;
-
-    function checkDeviceConnection() {
-      $.ajax({
-        url: '/ping',
-        timeout: 5000,
-        success: function () {
-          isDeviceConnected = true;
-          updateConnectionDisplay(true);
-          updateStatusBanner("ready");
-        },
-        error: function () {
-          isDeviceConnected = false;
-          updateConnectionDisplay(false);
-          updateStatusBanner("error");
-        }
-      });
+    function updateDashboard() {
+        fetch('/api/system/status')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success' && data.data) {
+                    updateStatusCards(data.data);
+                }
+            })
+            .catch(error => {
+                console.error('Failed to update dashboard:', error);
+            });
     }
 
-    function updateConnectionDisplay(connected) {
-      const btn = $('#connectionStatus');
-      if (connected) {
-        btn.removeClass('btn-danger').addClass('btn-success').text('Connected');
-      } else {
-        btn.removeClass('btn-success').addClass('btn-danger').text('Disconnected');
-      }
-    }
-
-    function updateStatusBanner(state) {
-      const banner = document.getElementById("statusBanner");
-      const colors = {
-        ready: "#0d6efd",
-        running: "#ffc107",
-        success: "#198754",
-        error: "#dc3545"
-      };
-      const messages = {
-        ready: "Ready to run diagnostics",
-        running: "Diagnostics in progress...",
-        success: "Diagnostics complete",
-        error: "Error - Check Connection"
-      };
-      banner.style.backgroundColor = colors[state];
-      banner.textContent = messages[state];
-    }
-
-    function persistDiagnosticsOutput() {
-      sessionStorage.setItem("diagnostics_output", document.getElementById("output").innerText);
-      sessionStorage.setItem("diagnostics_issues", document.getElementById("issueLog").innerHTML);
-    }
-
-    function restoreDiagnosticsOutput() {
-      const savedOutput = sessionStorage.getItem("diagnostics_output");
-      const savedIssues = sessionStorage.getItem("diagnostics_issues");
-
-      if (savedOutput) document.getElementById("output").innerText = savedOutput;
-      if (savedIssues) {
-        document.getElementById("issueLog").innerHTML = savedIssues;
-        document.getElementById("issueLog").classList.remove("d-none");
-      }
-    }
-
-    function clearDiagnosticsCache() {
-      sessionStorage.removeItem("diagnostics_output");
-      sessionStorage.removeItem("diagnostics_issues");
-    }
-
-    function runTest(testName) {
-      if (!isDeviceConnected) {
-        updateStatusBanner("error");
-        $('#output').text("❌ Device not reachable.");
-        return;
-      }
-
-      clearDiagnosticsCache();
-      updateStatusBanner("running");
-      $('#output').text("Running test: " + testName + "...");
-      $('#issueList').empty();
-      $('#issueLog').addClass('d-none');
-
-      const timeout = setTimeout(() => {
-        $('#output').text("❌ Test timed out.");
-        updateStatusBanner("error");
-      }, 60000);
-
-      const route = testName === 'full_diagnostics' ? '/run_full_diagnostics' : `/run_test/${testName}`;
-
-      $.get(route, function (response) {
-        clearTimeout(timeout);
-        if (response.status === 'success') {
-          $('#output').text(response.output);
-          updateStatusBanner("success");
-          analyzeOutputForIssues(response);
-          $('#hwid').text(response.hwid);
-          $('#ip').text(response.ip);
-          $('#uptime').text(response.uptime);
-          $('#macAddress').text(response.macAddress);
-          persistDiagnosticsOutput();
+    function updateStatusCards(data) {
+        // Connection Status
+        const connectionIndicator = document.getElementById('connection-status');
+        const connectionMessage = document.getElementById('connection-message');
+        if (data.connected) {
+            connectionIndicator.classList.remove('disconnected');
+            connectionIndicator.classList.add('connected');
+            connectionIndicator.querySelector('.status-text').textContent = 'Connected';
+            connectionMessage.textContent = data.deviceId || 'Device connected';
         } else {
-          $('#output').text("❌ " + response.output);
-          updateStatusBanner("error");
+            connectionIndicator.classList.remove('connected');
+            connectionIndicator.classList.add('disconnected');
+            connectionIndicator.querySelector('.status-text').textContent = 'Disconnected';
+            connectionMessage.textContent = data.connectionMessage || 'No device connected';
         }
-      }).fail(() => {
-        clearTimeout(timeout);
-        $('#output').text("❌ Error during test execution.");
-        updateStatusBanner("error");
-      });
+
+        // Battery Status
+        const batteryLevel = data.batteryLevel || 0;
+        const batteryFill = document.getElementById('battery-fill');
+        const batteryPercent = document.getElementById('battery-percent');
+        const batteryStatus = document.getElementById('battery-status');
+        
+        batteryPercent.textContent = batteryLevel + '%';
+        batteryFill.style.width = batteryLevel + '%';
+        
+        // Update battery color based on level
+        batteryFill.classList.remove('low', 'medium', 'high');
+        if (batteryLevel <= 20) {
+            batteryFill.classList.add('low');
+            batteryStatus.textContent = 'Low battery';
+        } else if (batteryLevel <= 60) {
+            batteryFill.classList.add('medium');
+            batteryStatus.textContent = 'Battery OK';
+        } else {
+            batteryFill.classList.add('high');
+            batteryStatus.textContent = 'Battery good';
+        }
+        
+        if (batteryLevel === 0) {
+            batteryStatus.textContent = 'No battery detected';
+        }
+
+        // Temperature
+        const tempValue = document.getElementById('temp-value');
+        const tempStatus = document.getElementById('temp-status');
+        const temp = parseFloat(data.temperature) || 0;
+        
+        tempValue.textContent = temp ? temp.toFixed(1) : '--';
+        
+        tempStatus.classList.remove('normal', 'warm', 'hot');
+        if (temp < 50) {
+            tempStatus.classList.add('normal');
+            tempStatus.textContent = 'Normal';
+        } else if (temp < 70) {
+            tempStatus.classList.add('warm');
+            tempStatus.textContent = 'Warm';
+        } else {
+            tempStatus.classList.add('hot');
+            tempStatus.textContent = 'Hot';
+        }
+
+        // Uptime & Last Update
+        document.getElementById('uptime-value').textContent = data.uptime || '--';
+        document.getElementById('last-update').textContent = data.lastUpdate ? `Last updated: ${data.lastUpdate}` : 'Last updated: --';
+
+        // System Information Table
+        document.getElementById('device-id').textContent = data.deviceId || '--';
+        document.getElementById('firmware-version').textContent = data.firmwareVersion || '--';
+        document.getElementById('processor').textContent = data.processor || '--';
+        document.getElementById('ip-address-table').textContent = data.ipAddress || '--';
+        document.getElementById('network-interface').textContent = data.ipAddress ? 'WiFi Connected' : 'Not Connected';
     }
 
-    function analyzeOutputForIssues(response) {
-      const output = response.output || "";
-      const issues = [];
-
-      if (/SIM.*not detected|No SIM/i.test(output)) issues.push("❌ SIM card not detected");
-      if (/No modems were found|ModemManager.*not running/i.test(output)) issues.push("❌ Modem not found or service down");
-      if (/Cannot open device \/dev\/video0/i.test(output)) issues.push("❌ Camera not detected");
-      if (/temperature.*([7-9]\d|[1-9]\d{2,})/i.test(output)) issues.push("🔥 High temperature reading detected");
-
-      const cpuMatch = output.match(/%Cpu\(s\):.*?(\d+\.\d+)\s*id/);
-      if (cpuMatch) {
-        const idle = parseFloat(cpuMatch[1]);
-        if (idle < 70) issues.push(`⚠️ High CPU usage detected (Idle: ${idle.toFixed(1)}%)`);
-      } else {
-        issues.push("⚠️ Unable to determine CPU usage.");
-      }
-
-      if (/No journal files.*permissions|dmesg: read kernel buffer failed/i.test(output)) {
-        issues.push("⚠️ Log access denied or restricted");
-      }
-
-      if (/error|failed|not found/i.test(output) && !output.includes("✅")) {
-        issues.push("⚠️ One or more components returned errors");
-      }
-
-      const issueLog = document.getElementById("issueLog");
-      const issueList = document.getElementById("issueList");
-      issueList.innerHTML = "";
-
-      if (Array.isArray(response.cameraDetails) && response.cameraDetails.length > 0) {
-        response.cameraDetails.forEach(detail => {
-          const li = document.createElement("li");
-          li.textContent = "✅ " + detail;
-          issueList.appendChild(li);
-        });
-      } else {
-        const li = document.createElement("li");
-        li.textContent = "❌ No IMX462 cameras detected.";
-        issueList.appendChild(li);
-      }
-
-      issues.forEach(issue => {
-        const li = document.createElement("li");
-        li.textContent = issue;
-        issueList.appendChild(li);
-      });
-
-      issueLog.classList.remove("d-none");
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      restoreDiagnosticsOutput();
-      checkDeviceConnection();
-      setInterval(checkDeviceConnection, 20000);
+    // Refresh button
+    const refreshBtn = document.getElementById('refresh-status');
+    refreshBtn.addEventListener('click', function() {
+        this.classList.add('spinning');
+        updateDashboard();
+        setTimeout(() => {
+            this.classList.remove('spinning');
+        }, 1000);
     });
-  </script>
-</body>
-</html>
+
+    // Initial load
+    updateDashboard();
+
+    // Set up auto-refresh
+    updateTimer = setInterval(updateDashboard, UPDATE_INTERVAL);
+
+    // Clean up on page unload
+    window.addEventListener('beforeunload', () => {
+        if (updateTimer) {
+            clearInterval(updateTimer);
+        }
+    });
+
+    // Diagnostic Test Results Display (updated by WebSocket from sidebar button)
+    window.updateDiagnosticResults = function(results) {
+        const diagnosticResults = document.getElementById('diagnostic-results');
+        
+        if (results) {
+            let resultsHTML = '<div class="diagnostic-test-list accordion" id="diagnosticAccordion">';
+            let testIndex = 0;
+            
+            for (const [test, result] of Object.entries(results)) {
+                const statusClass = result.status === 'passed' ? 'success' : 
+                                   result.status === 'warning' ? 'warning' : 'danger';
+                const statusIcon = result.status === 'passed' ? 'check_circle' : 
+                                  result.status === 'warning' ? 'warning' : 'error';
+                const testId = `test-${testIndex}`;
+                const collapseId = `collapse-${testIndex}`;
+                
+                resultsHTML += `
+                    <div class="diagnostic-test-item accordion-item">
+                        <div class="diagnostic-test-header accordion-header" id="${testId}">
+                            <button class="diagnostic-test-button accordion-button collapsed" 
+                                    type="button" 
+                                    data-bs-toggle="collapse" 
+                                    data-bs-target="#${collapseId}" 
+                                    aria-expanded="false" 
+                                    aria-controls="${collapseId}">
+                                <div class="d-flex justify-content-between align-items-center w-100 pe-4">
+                                    <div class="d-flex align-items-center">
+                                        <i class="material-icons text-${statusClass} me-2">${statusIcon}</i>
+                                        <div>
+                                            <strong>${test.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</strong>
+                                            <div class="small text-muted">${result.message || ''}</div>
+                                        </div>
+                                    </div>
+                                    <span class="badge bg-${statusClass}">${result.status}</span>
+                                </div>
+                            </button>
+                        </div>
+                        <div id="${collapseId}" 
+                             class="accordion-collapse collapse" 
+                             aria-labelledby="${testId}" 
+                             data-bs-parent="#diagnosticAccordion">
+                            <div class="diagnostic-test-body accordion-body">
+                                <pre class="diagnostic-output-pre"><code>${result.output || 'No output available'}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                testIndex++;
+            }
+            
+            resultsHTML += '</div>';
+            resultsHTML += `<div class="text-muted small mt-3">Tests completed at ${new Date().toLocaleTimeString()}</div>`;
+            
+            diagnosticResults.innerHTML = resultsHTML;
+        }
+    };
+    
+    // Show loading state when diagnostics are running
+    window.showDiagnosticLoading = function() {
+        const diagnosticResults = document.getElementById('diagnostic-results');
+        diagnosticResults.innerHTML = `
+            <div class="text-center py-3">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Running diagnostics...</span>
+                </div>
+                <p class="mt-2 text-muted">Running diagnostic tests...</p>
+            </div>
+        `;
+    };
+})();
+</script>
+{% endblock %}

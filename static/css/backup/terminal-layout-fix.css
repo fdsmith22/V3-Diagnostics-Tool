@@ -1,0 +1,376 @@
+/* Terminal Page Complete Layout Fix */
+
+/* Reset conflicting styles */
+body.terminal-page {
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+}
+
+/* Main wrapper - handles navbar offset */
+.terminal-page .main-wrapper {
+    position: fixed;
+    top: var(--header-height, 56px);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    overflow: hidden;
+    margin-top: 0 !important; /* Remove any margin */
+}
+
+/* Left sidebar (diagnostics menu) - collapsed by default on terminal page */
+.terminal-page .sidebar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: var(--sidebar-width, 280px);
+    height: 100%;
+    flex-shrink: 0;
+    overflow-y: auto;
+    padding-top: 0 !important;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: 101;
+    background-color: var(--darker-bg, #1a1a1a);
+}
+
+/* Show sidebar when explicitly opened */
+.terminal-page .sidebar.show {
+    transform: translateX(0);
+}
+
+/* Add toggle button for sidebar - sticky like command palette toggle */
+.terminal-page .sidebar-toggle {
+    position: fixed !important;
+    left: 10px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    width: 40px !important;
+    height: 80px !important;
+    background-color: rgba(30, 30, 45, 0.95) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 8px !important;
+    color: var(--light-text, #e1e1e1) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    z-index: 99 !important; /* Below sidebars but above content */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+}
+
+.terminal-page .sidebar-toggle:hover {
+    background-color: rgba(40, 40, 60, 0.95) !important;
+    border-color: var(--primary-color, #0d6efd) !important;
+    color: var(--primary-color, #0d6efd) !important;
+    box-shadow: 0 3px 12px rgba(13, 110, 253, 0.3) !important;
+}
+
+/* Keep toggle always visible */
+.terminal-page .sidebar-toggle {
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+}
+
+/* When sidebar is shown, position toggle appropriately */
+.terminal-page.has-sidebar-open .sidebar-toggle,
+body.has-sidebar-open .sidebar-toggle {
+    left: 290px !important; /* Move right when sidebar is shown (280px width + 10px gap) */
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+}
+
+/* Add spacing from navbar and adjust sidebar header */
+.terminal-page .sidebar-header {
+    padding-top: 1rem !important;
+    padding-bottom: 0.5rem !important;
+    margin-top: 0.5rem !important;
+}
+
+/* Content area - full width when sidebar collapsed */
+.terminal-page .content-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    margin: 0;
+    margin-left: 0 !important; /* Override base styles */
+    overflow: hidden;
+    min-width: 0; /* Allow shrinking */
+    transition: margin-left 0.3s ease;
+}
+
+/* Adjust content when sidebar is shown */
+.terminal-page .content-area.sidebar-open {
+    margin-left: var(--sidebar-width, 280px) !important;
+}
+
+/* Terminal page container - add padding for both toggle buttons */
+.terminal-page-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 0.5rem;
+    padding-left: 60px !important; /* Space for left toggle button (40px + 20px gap) */
+    padding-right: 60px !important; /* Space for right toggle button */
+    overflow: hidden;
+    max-width: 100%;
+    height: 100%;
+}
+
+/* Remove Bootstrap container constraints */
+.terminal-page-container.container-fluid {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0.5rem !important;
+    padding-left: 60px !important; /* Space for left toggle button */
+    padding-right: 60px !important; /* Space for right toggle button */
+    height: 100% !important;
+}
+
+/* Terminal card wrapper - fills entire container */
+.terminal-page-container .card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    min-height: 0; /* Allow shrinking */
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Remove margin from Bootstrap card */
+.terminal-page-container .card.mb-4 {
+    margin-bottom: 0 !important;
+}
+
+/* Card header - fixed height */
+.terminal-page-container .card-header {
+    flex-shrink: 0;
+    padding: 0.75rem 1rem;
+}
+
+/* Card body - fills remaining space */
+.terminal-page-container .terminal-card-body {
+    flex: 1;
+    padding: 0.75rem;
+    overflow: hidden;
+    display: flex;
+    min-height: 0;
+    height: 100%;
+}
+
+/* Terminal container - fills card body completely */
+#terminalContainer {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    position: relative;
+    background: #000;
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+    min-height: 400px; /* Minimum height to prevent collapse */
+}
+
+/* Terminal iframe - absolute positioning to fill container */
+#terminalFrame {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    border: none !important;
+    background: #000;
+    display: none; /* Initially hidden */
+}
+
+/* Show iframe when connected */
+#terminalFrame.connected {
+    display: block !important;
+}
+
+/* Terminal placeholder */
+#terminalPlaceholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 4px;
+}
+
+/* Hide placeholder when connected */
+#terminalPlaceholder.hidden {
+    display: none !important;
+}
+
+/* Command sidebar (right side) - increased width */
+.terminal-page .command-sidebar {
+    position: fixed;
+    top: var(--header-height, 56px);
+    right: 0;
+    width: 400px; /* Increased from 320px */
+    height: calc(100vh - var(--header-height, 56px));
+    background-color: var(--darker-bg);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    transition: transform 0.3s ease;
+    z-index: 100;
+    overflow-y: auto;
+}
+
+.terminal-page .command-sidebar.collapsed {
+    transform: translateX(100%); /* Completely off-screen when collapsed */
+}
+
+/* Command palette toggle - moves with sidebar */
+.terminal-page .command-sidebar-toggle {
+    position: fixed !important;
+    right: 10px !important;
+    left: auto !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    width: 40px !important;
+    height: 80px !important;
+    background-color: rgba(30, 30, 45, 0.95) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 8px !important;
+    color: var(--light-text, #e1e1e1) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    z-index: 99 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Move toggle with sidebar when expanded */
+.terminal-page .command-sidebar:not(.collapsed) ~ .command-sidebar-toggle {
+    right: 410px !important; /* Move left when sidebar is expanded (400px width + 10px gap) */
+}
+
+.terminal-page .command-sidebar-toggle:hover {
+    background-color: rgba(40, 40, 60, 0.95) !important;
+    border-color: var(--primary-color, #0d6efd) !important;
+    color: var(--primary-color, #0d6efd) !important;
+    box-shadow: 0 3px 12px rgba(13, 110, 253, 0.3) !important;
+}
+
+/* Adjust content area when command sidebar is expanded */
+.terminal-page .content-area.command-sidebar-open {
+    margin-right: 400px; /* Match sidebar width */
+}
+
+/* Adjust content area when command sidebar is collapsed */
+.terminal-page .content-area.command-sidebar-collapsed {
+    margin-right: 0; /* No margin needed - we have padding on container */
+}
+
+/* Remove Bootstrap row/col negative margins and ensure full height */
+.terminal-page-container .row {
+    margin: 0 !important;
+    height: 100% !important;
+}
+
+.terminal-page-container [class*="col-"] {
+    padding: 0 !important;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .terminal-page .sidebar {
+        width: 240px;
+    }
+    
+    .terminal-page .command-sidebar {
+        width: 280px;
+    }
+    
+    .terminal-page .content-area.command-sidebar-open {
+        margin-right: 280px;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Hide sidebars on mobile by default */
+    .terminal-page .sidebar {
+        position: absolute;
+        transform: translateX(-100%);
+        z-index: 101;
+    }
+    
+    .terminal-page .sidebar.show {
+        transform: translateX(0);
+    }
+    
+    .terminal-page .command-sidebar {
+        transform: translateX(100%);
+    }
+    
+    .terminal-page .command-sidebar.show {
+        transform: translateX(0);
+    }
+    
+    /* Full width content on mobile */
+    .terminal-page .content-area {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+    
+    .terminal-page-container {
+        padding: 0.5rem !important;
+    }
+}
+
+/* Ensure proper z-index layering */
+.navbar {
+    z-index: 1030;
+}
+
+.terminal-page .sidebar {
+    z-index: 101;
+}
+
+.terminal-page .command-sidebar {
+    z-index: 100;
+}
+
+/* Fix scrollbar issues */
+.terminal-page * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.05);
+}
+
+.terminal-page *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.terminal-page *::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.terminal-page *::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+.terminal-page *::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}

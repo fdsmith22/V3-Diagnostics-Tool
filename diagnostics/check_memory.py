@@ -2,5 +2,23 @@ import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from utils.ssh_interface import run_ssh_command
 
-print("Memory Usage:")
-print(run_ssh_command("free -h"))
+def run():
+    try:
+        output = []
+        output.append("Memory Usage:")
+        result = run_ssh_command("free -h")
+        output.append(result)
+        
+        return {
+            'status': 'success' if not result.startswith('Error:') else 'error',
+            'output': '\n'.join(output)
+        }
+    except Exception as e:
+        return {
+            'status': 'error',
+            'output': f'Error checking memory: {str(e)}'
+        }
+
+if __name__ == "__main__":
+    result = run()
+    print(result['output'])

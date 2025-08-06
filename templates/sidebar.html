@@ -1,0 +1,135 @@
+<!-- sidebar.html -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="d-flex justify-content-between align-items-center">
+      <h6 class="text-muted text-uppercase mb-0">
+        <i class="material-icons align-middle me-2">settings_suggest</i>
+        Diagnostics Menu
+      </h6>
+      <button class="btn btn-sm close-sidebar d-none" style="background: none; border: none; color: var(--light-text);">
+        <i class="material-icons">close</i>
+      </button>
+    </div>
+  </div>
+
+  <div class="sidebar-content">
+    <div class="diagnostic-groups accordion" id="diagnosticAccordion">
+      <!-- System Checks -->
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="systemChecksHeader">
+          <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#systemChecksCollapse">
+            <i class="material-icons me-2">computer</i>
+            System Checks
+          </button>
+        </h2>
+        <div id="systemChecksCollapse" class="accordion-collapse collapse show" data-bs-parent="#diagnosticAccordion">
+          <div class="accordion-body">
+            <div class="d-grid gap-2">
+              <button class="btn btn-diagnostic" onclick="runTest('check_system')"><i class="material-icons">memory</i> System Status</button>
+              <button class="btn btn-diagnostic" onclick="runTest('check_cpuinfo')"><i class="material-icons">developer_board</i> CPU Information</button>
+              <button class="btn btn-diagnostic" onclick="runTest('check_thermals')"><i class="material-icons">thermostat</i> Thermal Status</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hardware Checks -->
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="hardwareChecksHeader">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#hardwareChecksCollapse">
+            <i class="material-icons me-2">hardware</i>
+            Hardware Checks
+          </button>
+        </h2>
+        <div id="hardwareChecksCollapse" class="accordion-collapse collapse" data-bs-parent="#diagnosticAccordion">
+          <div class="accordion-body">
+            <div class="d-grid gap-2">
+              <button class="btn btn-diagnostic" onclick="runTest('check_power')"><i class="material-icons">power</i> Power Status</button>
+              <button class="btn btn-diagnostic" onclick="runTest('check_battery')"><i class="material-icons">battery_full</i> Battery Health</button>
+              <button class="btn btn-diagnostic" onclick="runTest('check_storage')"><i class="material-icons">storage</i> Storage Status</button>
+              <button class="btn btn-diagnostic" onclick="runTest('check_memory')"><i class="material-icons">memory</i> Memory Status</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Network Checks -->
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="networkChecksHeader">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#networkChecksCollapse">
+            <i class="material-icons me-2">network_check</i>
+            Network Checks
+          </button>
+        </h2>
+        <div id="networkChecksCollapse" class="accordion-collapse collapse" data-bs-parent="#diagnosticAccordion">
+          <div class="accordion-body">
+            <div class="d-grid gap-2">
+              <button class="btn btn-diagnostic" onclick="runTest('check_network')"><i class="material-icons">wifi</i> Network Status</button>
+              <button class="btn btn-diagnostic" onclick="runTest('check_interfaces')"><i class="material-icons">settings_ethernet</i> Network Interfaces</button>
+              <button class="btn btn-diagnostic" onclick="runTest('check_sim')"><i class="material-icons">sim_card</i> SIM Card Status</button>
+              <button class="btn btn-diagnostic" onclick="runTest('check_modem')"><i class="material-icons">router</i> Modem Status</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Advanced Checks -->
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="advancedChecksHeader">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#advancedChecksCollapse">
+            <i class="material-icons me-2">engineering</i>
+            Advanced Checks
+          </button>
+        </h2>
+        <div id="advancedChecksCollapse" class="accordion-collapse collapse" data-bs-parent="#diagnosticAccordion">
+          <div class="accordion-body">
+            <div class="d-grid gap-2">
+              <button class="btn btn-diagnostic" onclick="runTest('check_logs')"><i class="material-icons">description</i> System Logs</button>
+              <button class="btn btn-diagnostic" onclick="runTest('check_dmesg_critical')"><i class="material-icons">warning</i> Critical Messages</button>
+              <button class="btn btn-diagnostic" onclick="runTest('check_i2c')"><i class="material-icons">developer_board</i> I2C Bus</button>
+              <button class="btn btn-diagnostic" onclick="runTest('check_usb')"><i class="material-icons">usb</i> USB Devices</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar Footer -->
+  <div class="sidebar-footer">
+    <div class="d-grid">
+      <button class="btn btn-primary" onclick="runTest('check_all')">
+        <i class="material-icons">playlist_play</i>
+        Run All Tests
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Make showAlert available if not already defined
+if (typeof showAlert === 'undefined') {
+    window.showAlert = function(message, type = 'info') {
+        const alertContainer = document.getElementById('alert-container');
+        if (!alertContainer) {
+            console.warn('Alert container not found');
+            return;
+        }
+        const alertEl = document.createElement('div');
+        alertEl.className = `alert alert-${type} alert-dismissible fade show`;
+        alertEl.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        alertContainer.appendChild(alertEl);
+
+        setTimeout(() => {
+            const alert = bootstrap.Alert.getOrCreateInstance(alertEl);
+            alert.close();
+        }, 5000);
+    }
+}
+
+// Remove this function as it's now provided by diagnostics.js
+// The global runTest function will handle updating the diagnostic output log
+</script>

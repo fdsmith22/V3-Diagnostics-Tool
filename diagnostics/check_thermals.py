@@ -2,10 +2,13 @@ import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from utils.ssh_interface import run_ssh_command
 
-print("Thermal Sensors:")
-
-# Build shell command to fetch and label thermal zones
-command = r"""
+def run():
+    try:
+        output = []
+        output.append("Thermal Sensors:")
+        
+        # Build shell command to fetch and label thermal zones
+        command = r"""
 for zone in /sys/class/thermal/thermal_zone*; do
   label=$(cat "$zone/type" 2>/dev/null)
   temp=$(cat "$zone/temp" 2>/dev/null)
@@ -19,11 +22,27 @@ for zone in /sys/class/thermal/thermal_zone*; do
   fi
 done
 """
+        
+        result = run_ssh_command(command)
+        
+        # Format the result
+        if "Error" not in result:
+            output.append(result.strip())
+            status = 'success'
+        else:
+            output.append(f"❌ Error retrieving thermal zones:\n{result}")
+            status = 'error'
+        
+        return {
+            'status': status,
+            'output': '\n'.join(output)
+        }
+    except Exception as e:
+        return {
+            'status': 'error',
+            'output': f'Error checking thermals: {str(e)}'
+        }
 
-output = run_ssh_command(command)
-
-# Print the formatted result
-if "Error" not in output:
-    print(output.strip())
-else:
-    print(f"❌ Error retrieving thermal zones:\n{output}")
+if __name__ == "__main__":
+    result = run()
+    print(result['output'])

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}V3 Diagnostics{% endblock %}</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
+    <!-- Global Theme CSS (Consolidated) -->
+    <link href="{{ url_for('static', filename='css/global-theme.css') }}" rel="stylesheet">
+
+    <style>
+        :root {
+            --header-height: 56px;
+            --sidebar-width: 280px;
+            --darker-bg: #1a1a1a;
+            --dark-bg: #242424;
+            --light-text: #e1e1e1;
+            --gray-text: #888;
+            --primary-color: #0d6efd;
+            --success-color: #198754;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: var(--light-text);
+            min-height: 100vh;
+        }
+
+        .main-wrapper {
+            display: flex;
+            min-height: calc(100vh - var(--header-height));
+            margin-top: var(--header-height);
+            padding-top: 0;
+        }
+
+        .content-area {
+            flex: 1;
+            padding: 1.5rem;
+            margin-left: var(--sidebar-width);
+            width: calc(100% - var(--sidebar-width));
+            transition: margin-left 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .content-area {
+                margin-left: 0;
+                width: 100%;
+            }
+        }
+
+        .page-loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--darker-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .error-boundary {
+            padding: 2rem;
+            margin: 1rem 0;
+            background: rgba(220, 53, 69, 0.1);
+            border: 1px solid rgba(220, 53, 69, 0.2);
+            border-radius: 4px;
+        }
+    </style>
+
+    <!-- Additional CSS moved to global-theme.css -->
+    
+    {% block styles %}{% endblock %}
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="page-loading" id="pageLoading">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <!-- Navbar -->
+    {% include 'navbar.html' %}
+
+    <div class="main-wrapper">
+        <!-- Sidebar -->
+        {% include 'sidebar.html' %}
+
+        <!-- Main Content -->
+        <main class="content-area">
+            <div id="errorBoundary" class="error-boundary d-none">
+                <h4 class="text-danger">
+                    <i class="material-icons align-middle me-2">error</i>
+                    Error
+                </h4>
+                <p class="error-message mb-2"></p>
+                <button class="btn btn-outline-danger btn-sm" onclick="window.location.reload()">
+                    <i class="material-icons align-middle me-1">refresh</i>
+                    Reload Page
+                </button>
+            </div>
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- Bootstrap Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Global JS behavior
+        window.onerror = function(msg, url, line, col, error) {
+            try {
+                const errorBoundary = document.getElementById('errorBoundary');
+                const errorMessage = errorBoundary.querySelector('.error-message');
+                errorMessage.textContent = `${msg} (${line}:${col})`;
+                errorBoundary.classList.remove('d-none');
+            } catch (e) {
+                console.warn('Failed to display error boundary:', e);
+            }
+            return false;
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Hide loader
+            const loadingOverlay = document.getElementById('pageLoading');
+            if (loadingOverlay) {
+                loadingOverlay.style.opacity = '0';
+                setTimeout(() => loadingOverlay.remove(), 300);
+            }
+
+            // Enable Bootstrap tooltips
+            const tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+            tooltips.forEach(el => new bootstrap.Tooltip(el));
+        });
+
+        // Handle diagnostic test result events
+        document.addEventListener('diagnosticResult', (event) => {
+            const { test, result } = event.detail;
+            if (window.diagnosticsState?.setTestResult) {
+                window.diagnosticsState.setTestResult(test, result);
+            }
+        });
+    </script>
+
+    <!-- Global Scripts -->
+    <script src="{{ url_for('static', filename='js/config.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/utils.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/state.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/connection.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/diagnostics.js') }}"></script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

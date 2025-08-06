@@ -1,0 +1,64 @@
+/* Dark mode styles */
+.dark {
+    color-scheme: dark;
+}
+
+.dark body {
+    background-color: #1a1a1a;
+    color: #e5e5e5;
+}
+
+.dark .bg-white {
+    background-color: #2d2d2d;
+}
+
+.dark .text-gray-800 {
+    color: #e5e5e5;
+}
+
+.dark .border-gray-200 {
+    border-color: #404040;
+}
+
+/* Dark mode form elements */
+.dark input,
+.dark select,
+.dark textarea {
+    background-color: #1a1a1a;
+    border-color: #404040;
+    color: #e5e5e5;
+}
+
+/* Dark mode buttons */
+.dark .btn-primary {
+    background-color: #2563eb;
+    color: white;
+}
+
+.dark .btn-secondary {
+    background-color: #4b5563;
+    color: white;
+}
+
+/* Dark mode cards */
+.dark .card {
+    background-color: #2d2d2d;
+    border-color: #404040;
+}
+
+/* Dark mode alerts */
+.dark .alert {
+    background-color: #374151;
+    border-color: #4b5563;
+}
+
+/* Dark mode tables */
+.dark table {
+    background-color: #2d2d2d;
+    color: #e5e5e5;
+}
+
+.dark th,
+.dark td {
+    border-color: #404040;
+}

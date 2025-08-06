@@ -1,0 +1,177 @@
+<!-- command_sidebar.html -->
+<div class="command-sidebar collapsed" id="commandSidebar">
+  
+  <div class="command-sidebar-content">
+    <div class="command-sidebar-header">
+      <h6 class="text-muted text-uppercase mb-3">
+        <i class="material-icons align-middle me-2">code</i>
+        Command Palette
+      </h6>
+    </div>
+
+    <div class="command-groups accordion" id="commandAccordion">
+      <!-- System/Service Commands -->
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="systemCommandsHeader">
+          <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#systemCommandsCollapse">
+            <i class="material-icons me-2">terminal</i>
+            System/Service Commands
+          </button>
+        </h2>
+        <div id="systemCommandsCollapse" class="accordion-collapse collapse show" data-bs-parent="#commandAccordion">
+          <div class="accordion-body">
+            <div class="command-list">
+              <button class="command-item" data-command="sudo journalctl -u vision_pipeline -f">Monitor Vision Pipeline Logs</button>
+              <button class="command-item" data-command="sudo systemctl restart vision_pipeline">Restart Vision Pipeline</button>
+              <button class="command-item" data-command="sudo systemctl status restart_lte">LTE Service Status</button>
+              <button class="command-item" data-command="uname -a">System Info</button>
+              <button class="command-item" data-command="uptime">Uptime</button>
+              <button class="command-item" data-command="free -h">Memory Usage</button>
+              <button class="command-item" data-command="df -h">Disk Usage</button>
+              <button class="command-item" data-command="top">Process Monitor</button>
+              <button class="command-item" data-command="ps aux | grep python">Python Processes</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Power Mode Commands -->
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="powerCommandsHeader">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#powerCommandsCollapse">
+            <i class="material-icons me-2">power_settings_new</i>
+            Power Mode Commands
+          </button>
+        </h2>
+        <div id="powerCommandsCollapse" class="accordion-collapse collapse" data-bs-parent="#commandAccordion">
+          <div class="accordion-body">
+            <div class="command-list">
+              <button class="command-item" data-command="sudo nvpmodel -q">Check Current Power Mode</button>
+              <button class="command-item" data-command="sudo nvpmodel -m 0">Set Full Power Mode (Mode 0)</button>
+              <button class="command-item" data-command="sudo nvpmodel -m 1">Set Low Power Mode (Single Camera)</button>
+              <button class="command-item" data-command="sudo nvpmodel -m 2">Set Intermediate Power Mode (Dual Camera)</button>
+              <button class="command-item" data-command="tegrastats">Tegra Statistics</button>
+              <button class="command-item" data-command="nvidia-smi">NVIDIA GPU Status</button>
+              <button class="command-item" data-command="jetson_clocks --show">Clock Status</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Network/WiFi Commands -->
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="networkCommandsHeader">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#networkCommandsCollapse">
+            <i class="material-icons me-2">wifi</i>
+            Network/WiFi Commands
+          </button>
+        </h2>
+        <div id="networkCommandsCollapse" class="accordion-collapse collapse" data-bs-parent="#commandAccordion">
+          <div class="accordion-body">
+            <div class="command-list">
+              <button class="command-item" data-command="nmcli d wifi">List WiFi Networks</button>
+              <button class="command-item" data-command="sudo cat /etc/NetworkManager/system-connections/belkin.070">Check Network Config</button>
+              <button class="command-item" data-command="sudo nmcli c up belkin.070">Connect to belkin.070</button>
+              <button class="command-item" data-command="sudo nmcli d wifi connect belkin.070 password 22secondBELIEVEbuilding23__">Connect with Password</button>
+              <button class="command-item" data-command="sudo nmcli c up stream">Connect to Stream Network</button>
+              <button class="command-item" data-command="nmcli device status">Network Manager Status</button>
+              <button class="command-item" data-command="ip addr">IP Addresses</button>
+              <button class="command-item" data-command="ping -c 4 8.8.8.8">Test Connectivity</button>
+              <button class="command-item" data-command="netstat -tuln">Open Ports</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modem/LTE Commands -->
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="modemCommandsHeader">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#modemCommandsCollapse">
+            <i class="material-icons me-2">signal_cellular_alt</i>
+            Modem/LTE Commands
+          </button>
+        </h2>
+        <div id="modemCommandsCollapse" class="accordion-collapse collapse" data-bs-parent="#commandAccordion">
+          <div class="accordion-body">
+            <div class="command-list">
+              <button class="command-item" data-command="sudo mmcli -m 0">Modem Info</button>
+              <button class="command-item" data-command="sudo mmcli -L | grep -oE '/Modem/[0-9]+' | grep -oE '[0-9]+'">Get Modem Port</button>
+              <button class="command-item" data-command="sudo mmcli --sim 0 | grep -P 'iccid|ICCID' | grep -oE '[0-9]+'">Get SIM ICCID</button>
+              <button class="command-item" data-command="sudo mmcli -L">List All Modems</button>
+              <button class="command-item" data-command="sudo mmcli -m 0 --signal">Signal Strength</button>
+              <button class="command-item" data-command="sudo mmcli -m 0 --location-get">Location Info</button>
+              <button class="command-item" data-command="sudo systemctl status ModemManager">ModemManager Status</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Camera/Video Commands -->
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="cameraCommandsHeader">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#cameraCommandsCollapse">
+            <i class="material-icons me-2">videocam</i>
+            Camera/Video Commands
+          </button>
+        </h2>
+        <div id="cameraCommandsCollapse" class="accordion-collapse collapse" data-bs-parent="#commandAccordion">
+          <div class="accordion-body">
+            <div class="command-list">
+              <button class="command-item" data-command="v4l2-ctl --list-devices">List Camera Devices</button>
+              <button class="command-item" data-command="ls /dev/video*">Check Video Devices</button>
+              <button class="command-item" data-command="dmesg | grep -i camera">Camera Kernel Logs</button>
+              <button class="command-item" data-command="v4l2-ctl -d /dev/video0 --all">Video0 Details</button>
+              <button class="command-item" data-command="gst-inspect-1.0 | grep -i camera">GStreamer Camera Plugins</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hardware/Diagnostic Commands -->
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="hardwareCommandsHeader">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#hardwareCommandsCollapse">
+            <i class="material-icons me-2">memory</i>
+            Hardware/Diagnostic Commands
+          </button>
+        </h2>
+        <div id="hardwareCommandsCollapse" class="accordion-collapse collapse" data-bs-parent="#commandAccordion">
+          <div class="accordion-body">
+            <div class="command-list">
+              <button class="command-item" data-command="cat /proc/device-tree/model">Device Model</button>
+              <button class="command-item" data-command="i2cdetect -y -r 1">I2C Bus Scan</button>
+              <button class="command-item" data-command="lsusb">List USB Devices</button>
+              <button class="command-item" data-command="dmesg | tail -50">Recent Kernel Messages</button>
+              <button class="command-item" data-command="sudo journalctl -p 3 -xb --no-pager | tail -20">Critical System Logs</button>
+              <button class="command-item" data-command="sensors">Temperature Sensors</button>
+              <button class="command-item" data-command="cat /sys/class/thermal/thermal_zone*/temp">Thermal Zones</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Docker Commands -->
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="dockerCommandsHeader">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#dockerCommandsCollapse">
+            <i class="material-icons me-2">apps</i>
+            Docker Commands
+          </button>
+        </h2>
+        <div id="dockerCommandsCollapse" class="accordion-collapse collapse" data-bs-parent="#commandAccordion">
+          <div class="accordion-body">
+            <div class="command-list">
+              <button class="command-item" data-command="docker ps">Running Containers</button>
+              <button class="command-item" data-command="docker ps -a">All Containers</button>
+              <button class="command-item" data-command="docker images">List Images</button>
+              <button class="command-item" data-command="docker logs -f --tail 50">Container Logs</button>
+              <button class="command-item" data-command="docker stats --no-stream">Container Stats</button>
+              <button class="command-item" data-command="docker-compose ps">Compose Status</button>
+              <button class="command-item" data-command="docker system df">Disk Usage</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

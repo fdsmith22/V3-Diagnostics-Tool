@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+
+{% block title %}Terminal{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<link href="{{ url_for('static', filename='css/terminal-page.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<!-- Sidebar Toggle Button - positioned relative to terminal container -->
+<button class="sidebar-toggle" id="sidebarToggle" title="Toggle Diagnostics Menu">
+    <i class="material-icons">chevron_right</i>
+</button>
+
+<!-- Include Command Sidebar -->
+{% include 'command_sidebar.html' %}
+
+<!-- Command Palette Toggle Button - positioned on right side -->
+<button class="command-sidebar-toggle" id="commandSidebarToggle" title="Toggle Command Palette">
+    <i class="material-icons">chevron_left</i>
+</button>
+
+<div class="container-fluid px-4 terminal-page-container">
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary btn-sm" id="startTerminal">
+                            <i class="material-icons align-middle">terminal</i>
+                            <span class="ms-1">Connect</span>
+                        </button>
+                        <button class="btn btn-secondary btn-sm" id="stopTerminal" style="display: none;">
+                            <i class="material-icons align-middle">stop</i>
+                            <span class="ms-1">Disconnect</span>
+                        </button>
+                        <button class="btn btn-secondary btn-sm" id="clearBtn">
+                            <i class="material-icons align-middle">clear_all</i>
+                            <span class="ms-1">Clear</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body terminal-card-body">
+                    <div id="terminalContainer">
+                        <div id="terminalPlaceholder" class="text-center p-5">
+                            <p class="text-muted">Click "Connect" to start terminal session</p>
+                            <p class="text-muted small">Direct SSH connection to device at 192.168.55.1</p>
+                        </div>
+                        <iframe id="terminalFrame" style="display: none;"></iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add terminal-page class to body to prevent scrolling
+    document.body.classList.add('terminal-page');
+    
+    // Handle diagnostics sidebar toggle
+    const sidebar = document.querySelector('.sidebar');
+    const sidebarToggleBtn = document.getElementById('sidebarToggle');
+    const contentArea = document.querySelector('.content-area');
+    
+    if (sidebarToggleBtn && sidebar) {
+        // Show toggle button and ensure it stays visible
+        sidebarToggleBtn.style.display = 'flex';
+        sidebarToggleBtn.style.opacity = '1';
+        sidebarToggleBtn.style.pointerEvents = 'auto';
+        
+        // Hide close button in sidebar - no longer needed
+        const closeBtn = sidebar.querySelector('.close-sidebar');
+        if (closeBtn) {
+            closeBtn.classList.add('d-none');
+        }
+        
+        sidebarToggleBtn.addEventListener('click', function() {
+            sidebar.classList.toggle('show');
+            contentArea.classList.toggle('sidebar-open');
+            document.body.classList.toggle('has-sidebar-open');
+            
+            // Update button icon
+            const icon = this.querySelector('.material-icons');
+            if (sidebar.classList.contains('show')) {
+                icon.textContent = 'chevron_left';
+                // Move toggle with sidebar - keep it visible
+                this.style.left = '290px'; // sidebar width (280px) + 10px gap
+                this.style.opacity = '1';
+                this.style.visibility = 'visible';
+                this.style.pointerEvents = 'auto';
+            } else {
+                icon.textContent = 'chevron_right';
+                // Move toggle back to left edge - keep it visible
+                this.style.left = '10px';
+                this.style.opacity = '1';
+                this.style.visibility = 'visible';
+                this.style.pointerEvents = 'auto';
+            }
+        });
+    }
+    
+    // Handle command sidebar state
+    const commandSidebar = document.querySelector('.command-sidebar');
+    const commandToggleBtn = document.getElementById('commandSidebarToggle');
+    
+    // Check if command sidebar exists and set initial state
+    if (commandSidebar) {
+        if (commandSidebar.classList.contains('collapsed')) {
+            contentArea.classList.add('command-sidebar-collapsed');
+        } else {
+            contentArea.classList.add('command-sidebar-open');
+        }
+    }
+    
+    // Handle command palette toggle button
+    if (commandToggleBtn && commandSidebar) {
+        commandToggleBtn.addEventListener('click', function() {
+            commandSidebar.classList.toggle('collapsed');
+            const icon = this.querySelector('.material-icons');
+            
+            if (commandSidebar.classList.contains('collapsed')) {
+                icon.textContent = 'chevron_left';
+                contentArea.classList.remove('command-sidebar-open');
+                contentArea.classList.add('command-sidebar-collapsed');
+                // Move toggle back to right edge
+                this.style.right = '10px';
+            } else {
+                icon.textContent = 'chevron_right';
+                contentArea.classList.remove('command-sidebar-collapsed');
+                contentArea.classList.add('command-sidebar-open');
+                // Move toggle with sidebar
+                this.style.right = '410px';
+            }
+        });
+    }
+    
+    const startBtn = document.getElementById('startTerminal');
+    const stopBtn = document.getElementById('stopTerminal');
+    const clearBtn = document.getElementById('clearBtn');
+    const frame = document.getElementById('terminalFrame');
+    const placeholder = document.getElementById('terminalPlaceholder');
+    
+    let terminalProcess = null;
+    let ttydWindow = null;
+    
+    
+    startBtn.addEventListener('click', async function() {
+        try {
+            // Show loading state
+            startBtn.disabled = true;
+            startBtn.innerHTML = '<i class="material-icons align-middle">hourglass_empty</i><span class="ms-1">Starting...</span>';
+            placeholder.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="text-muted mt-3">Starting terminal server...</p>';
+            
+            // Start ttyd terminal server
+            const response = await fetch('/api/terminal/start', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({backend: 'ttyd'})
+            });
+            
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                // Show terminal iframe
+                frame.src = 'http://localhost:7681';
+                frame.classList.add('connected');
+                frame.style.display = 'block';
+                placeholder.classList.add('hidden');
+                placeholder.style.display = 'none';
+                startBtn.style.display = 'none';
+                stopBtn.style.display = 'inline-flex';
+                
+                // Wait for iframe to load
+                frame.onload = function() {
+                    ttydWindow = frame.contentWindow;
+                };
+                
+                terminalProcess = data.pid;
+            } else {
+                // Reset button on error
+                startBtn.disabled = false;
+                startBtn.innerHTML = '<i class="material-icons align-middle">terminal</i><span class="ms-1">Connect</span>';
+                placeholder.innerHTML = '<p class="text-muted">Click "Connect" to start terminal session</p><p class="text-muted small">Direct SSH connection to device at 192.168.55.1</p>';
+                alert(data.message || 'Failed to start terminal');
+            }
+        } catch (error) {
+            console.error('Failed to start terminal:', error);
+            // Reset button on error
+            startBtn.disabled = false;
+            startBtn.innerHTML = '<i class="material-icons align-middle">terminal</i><span class="ms-1">Connect</span>';
+            placeholder.innerHTML = '<p class="text-muted">Click "Connect" to start terminal session</p><p class="text-muted small">Direct SSH connection to device at 192.168.55.1</p>';
+            alert('Failed to start terminal. Make sure the device is connected.');
+        }
+    });
+    
+    stopBtn.addEventListener('click', async function() {
+        if (terminalProcess) {
+            await fetch('/api/terminal/stop', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({pid: terminalProcess})
+            });
+        }
+        
+        frame.src = '';
+        frame.classList.remove('connected');
+        frame.style.display = 'none';
+        placeholder.classList.remove('hidden');
+        placeholder.style.display = 'block';
+        placeholder.innerHTML = '<p class="text-muted">Click "Connect" to start terminal session</p><p class="text-muted small">Direct SSH connection to device at 192.168.55.1</p>';
+        startBtn.style.display = 'inline-flex';
+        startBtn.disabled = false;
+        stopBtn.style.display = 'none';
+        terminalProcess = null;
+        ttydWindow = null;
+    });
+    
+    clearBtn.addEventListener('click', function() {
+        // Focus on the iframe and try to send Ctrl+L
+        if (ttydWindow) {
+            frame.focus();
+            alert('Press Ctrl+L in the terminal to clear the screen');
+        }
+    });
+    
+    // Function to send text to ttyd terminal
+    function sendToTerminal(text) {
+        if (ttydWindow) {
+            try {
+                // ttyd uses WebSocket, we need to send the command via postMessage
+                // First try to access the ttyd terminal directly
+                ttydWindow.postMessage({
+                    type: 'input',
+                    data: text
+                }, '*');
+            } catch (e) {
+                console.error('Failed to send to terminal:', e);
+            }
+        }
+    }
+    
+    // Override command sidebar behavior for ttyd
+    const commandItems = document.querySelectorAll('.command-item');
+    commandItems.forEach(item => {
+        item.removeEventListener('click', item.onclick);
+        item.addEventListener('click', async function() {
+            const command = this.getAttribute('data-command');
+            if (command) {
+                try {
+                    // Copy command to clipboard
+                    await navigator.clipboard.writeText(command);
+                    
+                    // Visual feedback
+                    const originalText = this.textContent;
+                    this.textContent = '✓ Copied!';
+                    this.style.backgroundColor = '#28a745';
+                    
+                    setTimeout(() => {
+                        this.textContent = originalText;
+                        this.style.backgroundColor = '';
+                    }, 1000);
+                    
+                    // Show notification
+                    const notification = document.createElement('div');
+                    notification.className = 'alert alert-success position-fixed bottom-0 end-0 m-3';
+                    notification.style.zIndex = '9999';
+                    notification.innerHTML = `
+                        <small>Command copied to clipboard. Press <kbd>Ctrl+V</kbd> in terminal to paste.</small>
+                    `;
+                    document.body.appendChild(notification);
+                    
+                    setTimeout(() => {
+                        notification.remove();
+                    }, 3000);
+                    
+                } catch (err) {
+                    console.error('Failed to copy command:', err);
+                    alert('Failed to copy command to clipboard');
+                }
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,527 @@
+/* Enhanced Dashboard Styling */
+
+/* Compact Status Cards */
+.status-card-compact {
+    background: linear-gradient(135deg, rgba(20, 20, 35, 0.9), rgba(30, 30, 50, 0.9));
+    border: 1px solid rgba(124, 119, 255, 0.2);
+    border-radius: 12px;
+    padding: 1rem;
+    height: 100%;
+    min-height: 80px;
+    max-height: 100px;
+    display: flex;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.status-card-compact::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent-purple, #7c77ff), var(--accent-cyan, #00d4ff));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.status-card-compact:hover::before {
+    opacity: 1;
+}
+
+.status-card-compact:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(124, 119, 255, 0.2);
+    border-color: rgba(124, 119, 255, 0.4);
+}
+
+/* Card Icon */
+.status-card-icon {
+    width: 45px;
+    height: 45px;
+    min-width: 45px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    background: linear-gradient(135deg, rgba(124, 119, 255, 0.2), rgba(0, 212, 255, 0.2));
+    border: 1px solid rgba(124, 119, 255, 0.3);
+}
+
+.status-card-icon .material-icons {
+    font-size: 24px;
+    color: var(--accent-cyan, #00d4ff);
+}
+
+/* Card Content */
+.status-card-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.status-card-title {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary, #a8a8c0);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.25rem;
+}
+
+.status-card-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary, #e8e8f3);
+    line-height: 1.2;
+}
+
+.status-card-subtitle {
+    font-size: 0.75rem;
+    color: var(--text-secondary, #a8a8c0);
+    margin-top: 0.125rem;
+}
+
+/* Connection Status Specific */
+.connection-indicator {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.connection-indicator.connected {
+    background: rgba(0, 255, 136, 0.15);
+    border: 1px solid rgba(0, 255, 136, 0.4);
+    color: #00ff88;
+}
+
+.connection-indicator.disconnected {
+    background: rgba(255, 82, 82, 0.15);
+    border: 1px solid rgba(255, 82, 82, 0.4);
+    color: #ff5252;
+}
+
+.connection-indicator .pulse {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+    animation: pulse 2s infinite;
+}
+
+.connection-indicator.connected .pulse {
+    background: #00ff88;
+    box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+}
+
+.connection-indicator.disconnected .pulse {
+    background: #ff5252;
+    box-shadow: 0 0 10px rgba(255, 82, 82, 0.5);
+}
+
+/* Battery Status */
+.battery-display {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.battery-visual {
+    position: relative;
+    width: 40px;
+    height: 20px;
+    border: 2px solid rgba(124, 119, 255, 0.4);
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.battery-visual::after {
+    content: '';
+    position: absolute;
+    right: -4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 10px;
+    background: rgba(124, 119, 255, 0.4);
+    border-radius: 0 2px 2px 0;
+}
+
+.battery-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.5s ease, background 0.5s ease;
+}
+
+.battery-fill.low {
+    background: linear-gradient(90deg, #ff5252, #ff1744);
+}
+
+.battery-fill.medium {
+    background: linear-gradient(90deg, #ffa726, #ff9800);
+}
+
+.battery-fill.high {
+    background: linear-gradient(90deg, #00ff88, #00c853);
+}
+
+.battery-percent {
+    font-size: 1.25rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--accent-purple, #7c77ff), var(--accent-cyan, #00d4ff));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Temperature Display */
+.temp-display {
+    display: flex;
+    align-items: baseline;
+    gap: 0.25rem;
+}
+
+.temp-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.temp-unit {
+    font-size: 1rem;
+    color: var(--text-secondary, #a8a8c0);
+}
+
+.temp-status {
+    padding: 0.125rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-left: 0.5rem;
+}
+
+.temp-status.normal {
+    background: rgba(0, 255, 136, 0.15);
+    color: #00ff88;
+}
+
+.temp-status.warm {
+    background: rgba(255, 167, 38, 0.15);
+    color: #ffa726;
+}
+
+.temp-status.hot {
+    background: rgba(255, 82, 82, 0.15);
+    color: #ff5252;
+}
+
+/* Network Status */
+.network-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.network-type {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.6rem;
+    background: rgba(124, 119, 255, 0.15);
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--accent-purple, #7c77ff);
+}
+
+.network-type .material-icons {
+    font-size: 14px;
+    margin-right: 0.25rem;
+}
+
+.ip-address {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    color: var(--accent-cyan, #00d4ff);
+}
+
+/* Uptime Display */
+.uptime-display {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.uptime-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary, #e8e8f3);
+}
+
+.uptime-label {
+    font-size: 0.7rem;
+    color: var(--text-secondary, #a8a8c0);
+    text-transform: uppercase;
+}
+
+/* System Info Table Enhancement */
+.system-info-card {
+    background: linear-gradient(135deg, rgba(20, 20, 35, 0.9), rgba(30, 30, 50, 0.9));
+    border: 1px solid rgba(124, 119, 255, 0.2);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.system-info-card .card-header {
+    background: linear-gradient(135deg, rgba(124, 119, 255, 0.1), rgba(0, 212, 255, 0.05));
+    border-bottom: 1px solid rgba(124, 119, 255, 0.2);
+    padding: 1rem 1.25rem;
+}
+
+.system-info-card .table {
+    margin: 0;
+}
+
+.system-info-card .table th {
+    color: var(--text-secondary, #a8a8c0);
+    font-weight: 500;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-color: rgba(124, 119, 255, 0.1);
+}
+
+.system-info-card .table td {
+    color: var(--text-primary, #e8e8f3);
+    font-weight: 600;
+    border-color: rgba(124, 119, 255, 0.1);
+}
+
+.system-info-card .table tr:hover {
+    background: rgba(124, 119, 255, 0.05);
+}
+
+/* Refresh Button Enhancement */
+.btn-refresh {
+    background: linear-gradient(135deg, rgba(124, 119, 255, 0.2), rgba(0, 212, 255, 0.1));
+    border: 1px solid rgba(124, 119, 255, 0.3);
+    color: var(--accent-cyan, #00d4ff);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-refresh:hover {
+    background: linear-gradient(135deg, rgba(124, 119, 255, 0.3), rgba(0, 212, 255, 0.2));
+    border-color: var(--accent-cyan, #00d4ff);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3);
+}
+
+.btn-refresh.spinning .material-icons {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .status-card-compact {
+        min-height: 70px;
+        max-height: 90px;
+        padding: 0.75rem;
+    }
+    
+    .status-card-icon {
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+    }
+    
+    .status-card-value {
+        font-size: 1.1rem;
+    }
+}
+
+/* Loading States */
+.loading-shimmer {
+    background: linear-gradient(90deg, 
+        rgba(124, 119, 255, 0.05) 25%, 
+        rgba(124, 119, 255, 0.15) 50%, 
+        rgba(124, 119, 255, 0.05) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Diagnostic Log Card Styling */
+.diagnostic-log-card {
+    background: linear-gradient(135deg, rgba(20, 20, 35, 0.9), rgba(30, 30, 50, 0.9));
+    border: 1px solid rgba(124, 119, 255, 0.2);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.diagnostic-log-card .card-header {
+    background: linear-gradient(135deg, rgba(124, 119, 255, 0.1), rgba(0, 212, 255, 0.05));
+    border-bottom: 1px solid rgba(124, 119, 255, 0.2);
+    padding: 1rem 1.25rem;
+}
+
+.diagnostic-log-card .card-body {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.diagnostic-results-container {
+    min-height: 150px;
+}
+
+/* Accordion Styling for Diagnostic Tests */
+.diagnostic-test-list.accordion {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.diagnostic-test-item.accordion-item {
+    background: rgba(124, 119, 255, 0.05);
+    border: 1px solid rgba(124, 119, 255, 0.1);
+    border-radius: 8px !important;
+    overflow: hidden;
+    transition: all 0.2s ease;
+    margin-bottom: 0.5rem;
+}
+
+.diagnostic-test-item:hover {
+    background: rgba(124, 119, 255, 0.08);
+    border-color: rgba(124, 119, 255, 0.2);
+}
+
+/* Accordion Button Styling */
+.diagnostic-test-button.accordion-button {
+    background: transparent;
+    color: var(--text-primary, #e8e8f3);
+    padding: 0.75rem;
+    padding-right: 3rem; /* Extra padding for arrow */
+    border: none;
+    box-shadow: none;
+    position: relative;
+}
+
+.diagnostic-test-button.accordion-button:not(.collapsed) {
+    background: rgba(124, 119, 255, 0.1);
+    color: var(--text-primary, #e8e8f3);
+    box-shadow: none;
+}
+
+.diagnostic-test-button.accordion-button:focus {
+    box-shadow: none;
+    border-color: transparent;
+}
+
+.diagnostic-test-button.accordion-button::after {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%2300d4ff'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e");
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1rem;
+    height: 1rem;
+}
+
+.diagnostic-test-button.accordion-button:not(.collapsed)::after {
+    transform: translateY(-50%) rotate(180deg);
+}
+
+.diagnostic-test-header {
+    border: none;
+    background: transparent;
+}
+
+.diagnostic-test-body.accordion-body {
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.3);
+    border-top: 1px solid rgba(124, 119, 255, 0.1);
+}
+
+/* Raw Output Styling */
+.diagnostic-output-pre {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(124, 119, 255, 0.2);
+    border-radius: 6px;
+    padding: 1rem;
+    margin: 0;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.diagnostic-output-pre code {
+    color: var(--text-secondary, #a8a8c0);
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* Custom scrollbar for raw output */
+.diagnostic-output-pre::-webkit-scrollbar {
+    width: 6px;
+}
+
+.diagnostic-output-pre::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.diagnostic-output-pre::-webkit-scrollbar-thumb {
+    background: rgba(124, 119, 255, 0.4);
+    border-radius: 3px;
+}
+
+.diagnostic-output-pre::-webkit-scrollbar-thumb:hover {
+    background: rgba(124, 119, 255, 0.6);
+}
+
+.diagnostic-test-item .material-icons {
+    font-size: 20px;
+}
+
+/* Expand/Collapse Animation */
+.accordion-collapse {
+    transition: all 0.3s ease;
+}
+
+/* Status Badge in Accordion */
+.diagnostic-test-button .badge {
+    white-space: nowrap;
+}
+
+/* Custom scrollbar for diagnostic results */
+.diagnostic-log-card .card-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.diagnostic-log-card .card-body::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.diagnostic-log-card .card-body::-webkit-scrollbar-thumb {
+    background: rgba(124, 119, 255, 0.4);
+    border-radius: 3px;
+}
+
+.diagnostic-log-card .card-body::-webkit-scrollbar-thumb:hover {
+    background: rgba(124, 119, 255, 0.6);
+}
+

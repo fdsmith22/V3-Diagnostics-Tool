@@ -1,0 +1,350 @@
+/* Main styles for V3 Diagnostics Tool */
+
+/* Sidebar Styles */
+.sidebar {
+    position: fixed;
+    top: var(--header-height, 56px);
+    left: 0;
+    width: var(--sidebar-width, 280px);
+    height: calc(100vh - var(--header-height, 56px));
+    background-color: var(--darker-bg, #1a1a1a);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    overflow-y: auto;
+    z-index: 1040;
+    transition: transform 0.3s ease;
+}
+
+.sidebar-header {
+    padding: 1.5rem 1rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-content {
+    padding: 1rem;
+}
+
+.sidebar-footer {
+    position: sticky;
+    bottom: 0;
+    padding: 1rem;
+    background-color: var(--darker-bg, #1a1a1a);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Diagnostic Button Styles */
+.btn-diagnostic {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+    padding: 0.5rem 1rem;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--light-text, #e1e1e1);
+    transition: all 0.2s ease;
+}
+
+.btn-diagnostic:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    transform: translateX(2px);
+}
+
+.btn-diagnostic:active {
+    transform: translateX(0);
+}
+
+.btn-diagnostic .material-icons {
+    margin-right: 0.5rem;
+    font-size: 20px;
+}
+
+.btn-diagnostic.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Accordion Overrides for Dark Theme */
+.accordion-item {
+    background-color: transparent;
+    border: none;
+}
+
+.accordion-button {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--light-text, #e1e1e1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+.accordion-button:focus {
+    box-shadow: none;
+    border-color: var(--primary-color, #0d6efd);
+}
+
+.accordion-body {
+    background-color: transparent;
+    padding: 0.5rem 0;
+}
+
+/* Terminal Styles */
+.terminal-container {
+    width: 100%;
+    height: 70vh;
+    background: #000;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* XTerm styles removed - using ttyd now */
+
+.terminal-header {
+    background: #1a1a1a;
+    padding: 8px;
+    border-bottom: 1px solid #333;
+}
+
+.terminal-footer {
+    background: #1a1a1a;
+    padding: 8px;
+    border-top: 1px solid #333;
+}
+
+/* Card Overrides */
+.card {
+    background-color: var(--dark-bg, #242424);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.card-header {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Progress Bar Overrides */
+.progress {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Diagnostic Output */
+#diagnostic-log {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+/* Responsive Sidebar */
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%);
+    }
+    
+    .sidebar.show {
+        transform: translateX(0);
+    }
+    
+    .content-area {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+}
+
+/* Scrollbar Styling */
+.sidebar::-webkit-scrollbar,
+#diagnostic-log::-webkit-scrollbar {
+    width: 8px;
+}
+
+.sidebar::-webkit-scrollbar-track,
+#diagnostic-log::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.sidebar::-webkit-scrollbar-thumb,
+#diagnostic-log::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover,
+#diagnostic-log::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Status Indicators */
+.badge {
+    font-weight: 500;
+    padding: 0.35em 0.65em;
+}
+
+/* Alert Overrides */
+.alert {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+/* Table Overrides */
+.table {
+    color: var(--light-text, #e1e1e1);
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #fff;
+}
+
+/* Utility Classes */
+.text-muted {
+    color: var(--gray-text, #888) !important;
+}
+
+.bg-dark {
+    background-color: var(--dark-bg, #242424) !important;
+}
+
+.bg-darker {
+    background-color: var(--darker-bg, #1a1a1a) !important;
+}
+
+/* Command Sidebar Styles */
+.command-sidebar {
+    position: fixed;
+    top: var(--header-height);
+    right: 0;
+    width: 400px; /* Increased from 320px */
+    height: calc(100vh - var(--header-height));
+    background-color: var(--darker-bg);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    transition: transform 0.3s ease;
+    z-index: 1000;
+    overflow-y: auto;
+}
+
+.command-sidebar.collapsed {
+    transform: translateX(calc(100% - 40px));
+}
+
+.command-sidebar-toggle {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 80px;
+    background-color: rgba(30, 30, 45, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-right: none;
+    border-radius: 8px 0 0 8px;
+    color: var(--light-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    z-index: 99;
+}
+
+.command-sidebar-toggle:hover {
+    background-color: rgba(40, 40, 60, 0.95);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    box-shadow: 0 3px 12px rgba(13, 110, 253, 0.3);
+}
+
+.command-sidebar-content {
+    padding: 1.5rem;
+    margin-left: 40px;
+}
+
+.command-sidebar-header {
+    margin-bottom: 1rem;
+}
+
+.command-groups .accordion-item {
+    background-color: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 0.5rem;
+}
+
+.command-groups .accordion-button {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--light-text);
+    border: none;
+    padding: 0.75rem 1rem;
+}
+
+.command-groups .accordion-button:not(.collapsed) {
+    background-color: rgba(13, 110, 253, 0.1);
+    color: var(--light-text);
+}
+
+.command-groups .accordion-button:focus {
+    box-shadow: none;
+    border-color: transparent;
+}
+
+.command-groups .accordion-body {
+    background-color: var(--darker-bg);
+    padding: 0.5rem;
+}
+
+.command-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.command-item {
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--light-text);
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+    font-size: 0.875rem;
+    word-break: break-all;
+}
+
+.command-item:hover {
+    background-color: rgba(13, 110, 253, 0.2);
+    border-color: rgba(13, 110, 253, 0.4);
+    transform: translateX(-2px);
+}
+
+.command-item:active {
+    transform: translateX(0);
+    background-color: rgba(13, 110, 253, 0.3);
+}
+
+/* Adjust terminal container when sidebar is open */
+.terminal-page-container {
+    transition: margin-right 0.3s ease;
+}
+
+.terminal-page-container.sidebar-open {
+    margin-right: 320px;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .command-sidebar {
+        width: 280px;
+    }
+    
+    .command-sidebar.collapsed {
+        transform: translateX(100%);
+    }
+    
+    .command-sidebar-toggle {
+        display: none;
+    }
+}

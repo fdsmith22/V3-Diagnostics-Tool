@@ -35,11 +35,29 @@ A comprehensive web-based diagnostic interface for V3 sensor modules with integr
 
 ## Installation
 
-### 1. Clone the Repository
+### Quick Install (Auto-Update Version)
+
+For colleagues who want automatic updates, run this one-line installer:
 
 ```bash
-git clone https://github.com/yourusername/V3-Diagnostics-Tool2.git
-cd V3-Diagnostics-Tool2
+curl -fsSL https://raw.githubusercontent.com/fdsmith22/V3-Diagnostics-Tool/main/install.sh | bash
+```
+
+This will:
+- Install all system dependencies
+- Create a launcher that auto-updates from GitHub
+- Add desktop shortcut and terminal command
+- Always run the latest version on startup
+
+After installation, simply run `v3-diagnostics` from anywhere.
+
+### Manual Installation
+
+For development or manual setup:
+
+```bash
+git clone https://github.com/fdsmith22/V3-Diagnostics-Tool.git
+cd V3-Diagnostics-Tool
 ```
 
 ### 2. Set Up Python Environment

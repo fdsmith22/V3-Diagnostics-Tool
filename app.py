@@ -684,6 +684,20 @@ def get_system_info():
         return None
 
 if __name__ == '__main__':
+    import argparse
+    
+    # Parse command line arguments for port
+    parser = argparse.ArgumentParser(description='V3 Diagnostics Tool')
+    parser.add_argument('--port', type=int, default=5000, help='Port to run on (default: 5000)')
+    parser.add_argument('--host', type=str, default='0.0.0.0', help='Host to bind to (default: 0.0.0.0)')
+    args = parser.parse_args()
+    
+    # Also check environment variable for port
+    port = int(os.environ.get('FLASK_RUN_PORT', args.port))
+    host = args.host
+    
+    logger.info(f"Starting V3 Diagnostics Tool on {host}:{port}")
+    
     # Use threading mode for better stability with long-running requests
-    socketio.run(app, host='0.0.0.0', port=5000, debug=True, allow_unsafe_werkzeug=True,
+    socketio.run(app, host=host, port=port, debug=True, allow_unsafe_werkzeug=True,
                  use_reloader=False, log_output=True)

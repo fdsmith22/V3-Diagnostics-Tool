@@ -239,7 +239,12 @@
         document.getElementById('firmware-version').textContent = data.firmwareVersion || '--';
         document.getElementById('processor').textContent = data.processor || '--';
         document.getElementById('ip-address-table').textContent = data.ipAddress || '--';
-        document.getElementById('network-interface').textContent = data.ipAddress ? 'WiFi Connected' : 'Not Connected';
+        // Only show network interface if device is actually connected
+        if (data.connected) {
+            document.getElementById('network-interface').textContent = data.ipAddress && data.ipAddress !== '--' ? 'WiFi Connected' : 'Not Connected';
+        } else {
+            document.getElementById('network-interface').textContent = '--';
+        }
     }
 
     // Refresh button

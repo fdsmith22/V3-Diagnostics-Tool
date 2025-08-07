@@ -174,24 +174,28 @@ class PersistentSSHConnection:
             return False, f"Error: {str(e)}"
     
     def check_connection(self) -> Tuple[bool, str]:
-        """Quick connection check without blocking."""
-        # First check if we think we're connected without actually testing
-        if not self.connected or not self.client:
-            return False, "Not connected (no active session)"
+        """Quick connection check - establishes connection if needed."""
+        # If we think we're connected, verify it's still active
+        if self.connected and self.client:
+            try:
+                transport = self.client.get_transport()
+                if transport and transport.is_active():
+                    # Quick test to verify connection
+                    success, output = self.execute_command("echo ok", timeout=2)
+                    if success and output == "ok":
+                        return True, "Connection active"
+            except:
+                pass
+            
+            # Connection was lost
+            self.connected = False
         
-        # Try to check transport without executing command
-        try:
-            transport = self.client.get_transport()
-            if transport and transport.is_active():
-                # Only do actual test if transport seems active
-                success, output = self.execute_command("echo ok", timeout=2)
-                if success and output == "ok":
-                    return True, "Connection active"
-        except:
-            pass
-        
-        self.connected = False
-        return False, "Connection lost"
+        # Try to establish connection if not connected
+        logger.info("No active connection, attempting to connect...")
+        if self.connect():
+            return True, "Connection established"
+        else:
+            return False, "Failed to connect to device"
     
     def __del__(self):
         """Clean up connection on deletion."""

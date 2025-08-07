@@ -9,9 +9,8 @@
 
 {% block content %}
 <div class="container-fluid px-4">
-    <!-- Page Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3">System Dashboard</h1>
+    <!-- Page Header with just refresh button -->
+    <div class="d-flex justify-content-end mb-3">
         <button class="btn btn-refresh" id="refresh-status">
             <i class="material-icons align-middle">refresh</i>
             <span class="d-none d-sm-inline ms-1">Refresh</span>
@@ -90,7 +89,7 @@
         </div>
     </div>
 
-    <!-- System Information Card -->
+    <!-- System Information Card - Horizontal Layout -->
     <div class="system-info-card card mb-4">
         <div class="card-header">
             <h5 class="card-title mb-0">
@@ -98,32 +97,40 @@
                 System Information
             </h5>
         </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <tbody>
-                        <tr>
-                            <th style="width: 200px;">Device ID</th>
-                            <td id="device-id">--</td>
-                        </tr>
-                        <tr>
-                            <th>Firmware Version</th>
-                            <td id="firmware-version">--</td>
-                        </tr>
-                        <tr>
-                            <th>Processor</th>
-                            <td id="processor">--</td>
-                        </tr>
-                        <tr>
-                            <th>IP Address</th>
-                            <td id="ip-address-table">--</td>
-                        </tr>
-                        <tr>
-                            <th>Network Interface</th>
-                            <td id="network-interface">--</td>
-                        </tr>
-                    </tbody>
-                </table>
+        <div class="card-body">
+            <div class="row g-3">
+                <!-- First Column -->
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="d-flex flex-column">
+                        <small class="text-muted mb-1">Device ID</small>
+                        <span class="fw-semibold" id="device-id">--</span>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="d-flex flex-column">
+                        <small class="text-muted mb-1">Firmware Version</small>
+                        <span class="fw-semibold" id="firmware-version">--</span>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="d-flex flex-column">
+                        <small class="text-muted mb-1">IP Address</small>
+                        <span class="fw-semibold" id="ip-address-table">--</span>
+                    </div>
+                </div>
+                <!-- Second Row -->
+                <div class="col-12 col-md-6 col-lg-8">
+                    <div class="d-flex flex-column">
+                        <small class="text-muted mb-1">Processor</small>
+                        <span class="fw-semibold" id="processor">--</span>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="d-flex flex-column">
+                        <small class="text-muted mb-1">Network Interface</small>
+                        <span class="fw-semibold" id="network-interface">--</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

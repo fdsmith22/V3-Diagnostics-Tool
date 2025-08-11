@@ -24,7 +24,7 @@ echo "Starting ttyd terminal server..."
 echo "Connecting to: $SSH_USER@$SSH_HOST:$SSH_PORT"
 
 # Run ttyd with SSH command
-# -p 7681: Port to listen on
+# -p 7682: Port to listen on
 # -i lo: Only listen on localhost for security
 # -t fontSize=14: Set font size
 # -t theme='{"background": "#000000", "foreground": "#ffffff"}': Dark theme
@@ -34,7 +34,7 @@ if [ -n "$SSH_PASSWORD" ]; then
     echo "Using SSH password authentication"
     # Use sshpass if password is available
     # -W flag makes terminal writable
-    ttyd -W -p 7681 -i lo \
+    ttyd -W -p 7682 -i lo \
         -t fontSize=14 \
         -t 'theme={"background": "#000000", "foreground": "#ffffff", "cursor": "#ffffff"}' \
         -- sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
@@ -43,7 +43,7 @@ else
     echo "No SSH password provided, will prompt for password"
     # Without password (will prompt)
     # -W flag makes terminal writable
-    ttyd -W -p 7681 -i lo \
+    ttyd -W -p 7682 -i lo \
         -t fontSize=14 \
         -t 'theme={"background": "#000000", "foreground": "#ffffff", "cursor": "#ffffff"}' \
         -- ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \

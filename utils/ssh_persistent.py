@@ -36,7 +36,9 @@ class PersistentSSHConnection:
         # Connection settings
         self.connection_timeout = 3   # 3 seconds for connection (reduced from 30)
         self.command_timeout = 60     # 60 seconds for commands by default
-        self.keepalive_interval = 5   # Send keepalive every 5 seconds
+        self.keepalive_interval = 15  # Send keepalive every 15 seconds
+        self.max_retries = 3         # Maximum reconnection attempts
+        self.retry_delay = 2         # Delay between reconnection attempts
         
         # Don't connect immediately - wait until first use
         logger.info("SSH connection manager initialized (not connected yet)")
@@ -62,7 +64,7 @@ class PersistentSSHConnection:
                 self.client = paramiko.SSHClient()
                 self.client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
                 
-                # Connect with timeout
+                # Connect with timeout and better settings
                 self.client.connect(
                     hostname=self.ssh_host,
                     port=self.ssh_port,
@@ -70,12 +72,18 @@ class PersistentSSHConnection:
                     password=self.ssh_password,
                     timeout=self.connection_timeout,
                     allow_agent=False,
-                    look_for_keys=False
+                    look_for_keys=False,
+                    banner_timeout=10,
+                    auth_timeout=10
                 )
                 
-                # Set keepalive
+                # Set keepalive and other transport settings
                 transport = self.client.get_transport()
                 transport.set_keepalive(self.keepalive_interval)
+                # Set window and packet sizes for better performance
+                transport.window_size = 2147483647  # Max window size
+                transport.packetizer.REKEY_BYTES = pow(2, 40)  # Rekey after 1TB
+                transport.packetizer.REKEY_PACKETS = pow(2, 40)  # Rekey after 1TB packets
                 
                 self.connected = True
                 self.last_activity = time.time()

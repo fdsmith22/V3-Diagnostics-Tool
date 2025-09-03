@@ -238,6 +238,17 @@ body {
     background: rgba(124, 119, 255, 0.25);
 }
 
+/* Enhanced hover states for command display */
+.command-item[data-showing-command="true"] {
+    white-space: normal;
+    word-break: break-all;
+    padding: 8px 12px;
+    font-size: 0.85em;
+    background: rgba(0, 255, 0, 0.08);
+    border-color: #00ff00;
+    color: #00ff00;
+}
+
 /* ==========================================================================
    5. Toggle Buttons (Unified Style)
    ========================================================================== */

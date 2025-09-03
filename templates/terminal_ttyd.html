@@ -58,6 +58,7 @@
 
 {% block scripts %}
 {{ super() }}
+<script src="{{ url_for('static', filename='js/command-palette-enhanced.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Add terminal-page class to body to prevent scrolling

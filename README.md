@@ -221,21 +221,152 @@ V3-Diagnostics-Tool2/
 ├── .env.template          # Environment variable template
 ├── start_ttyd.sh          # Terminal server startup script
 ├── diagnostics/           # Diagnostic test modules
-│   ├── check_system.py
-│   ├── check_network.py
-│   ├── check_storage.py
+│   ├── check_system.py    # System info and uptime
+│   ├── check_network.py   # Network connectivity tests
+│   ├── check_storage.py   # Disk usage and health
+│   ├── check_battery.py   # Battery voltage and charge
+│   ├── check_modem.py     # LTE modem status
+│   ├── check_sim.py       # SIM card detection
 │   └── ...
 ├── static/               # Frontend assets
 │   ├── css/             # Stylesheets
+│   │   ├── global-theme.css      # Main theme and components
+│   │   └── terminal-page.css     # Terminal-specific styles
 │   └── js/              # JavaScript files
+│       ├── diagnostics.js         # Diagnostic test runner
+│       ├── connection.js          # SSH connection manager
+│       └── command-palette-enhanced.js # Command hover tooltips
 ├── templates/            # HTML templates
-│   ├── base.html        # Base template
-│   ├── index.html       # Dashboard
-│   └── terminal_ttyd.html # Terminal interface
+│   ├── base.html              # Base template
+│   ├── index.html             # Dashboard page
+│   ├── terminal_ttyd.html     # Terminal interface
+│   ├── sidebar.html           # Dashboard diagnostics sidebar
+│   └── command_sidebar.html   # Terminal command palette
 └── utils/               # Utility modules
-    ├── ssh_interface.py  # SSH connection wrapper
-    └── ssh_persistent.py # Persistent SSH manager
+    ├── ssh_interface.py       # SSH connection wrapper
+    └── ssh_persistent.py      # Persistent SSH manager
 ```
+
+## Project Context & Architecture
+
+### Application Overview
+The V3 Diagnostics Tool is a Flask-based web application designed for hardware testing and debugging of V3 sensor modules. It provides two main interfaces:
+
+1. **Dashboard Page** (`/`) - Real-time system monitoring and diagnostic testing
+2. **Terminal Page** (`/terminal`) - Interactive SSH terminal with command palette
+
+### Key Components
+
+#### Two Different Sidebars - Important Distinction!
+
+##### 1. Dashboard Sidebar (`templates/sidebar.html`)
+- **Purpose**: Diagnostic test buttons for running system checks
+- **Location**: Left side of dashboard page
+- **Content**: Grouped diagnostic tests (System, Hardware, Network, Advanced)
+- **Function**: Each button runs a Python diagnostic script via API calls
+- **Example buttons**: System Status, CPU Info, Battery Health, Network Status
+
+##### 2. Command Palette Sidebar (`templates/command_sidebar.html`)  
+- **Purpose**: Quick command shortcuts for terminal page
+- **Location**: Right side of terminal page
+- **Content**: Pre-defined shell commands organized by category
+- **Function**: Copy commands to clipboard for pasting in terminal
+- **Example commands**: System monitoring, power modes, network config, Docker
+
+**⚠️ Important**: When adding new features, ensure you're editing the correct sidebar file!
+
+### Adding New Features
+
+#### Adding a New Diagnostic Test (Dashboard)
+
+1. **Create diagnostic script** in `diagnostics/` folder:
+```python
+# diagnostics/check_example.py
+from utils.ssh_interface import run_ssh_command
+
+def run():
+    try:
+        result = run_ssh_command("your_command_here")
+        return {
+            'status': 'success',
+            'output': result
+        }
+    except Exception as e:
+        return {
+            'status': 'error',
+            'output': str(e)
+        }
+```
+
+2. **Add button to dashboard sidebar** (`templates/sidebar.html`):
+```html
+<button class="btn btn-diagnostic" onclick="runTest('check_example')">
+    <i class="material-icons">icon_name</i> Test Name
+</button>
+```
+
+#### Adding a New Command (Terminal)
+
+1. **Edit command palette** (`templates/command_sidebar.html`):
+```html
+<!-- Find the appropriate command group -->
+<div class="command-list">
+    <!-- Add your new command button -->
+    <button class="command-item" data-command="your command here">
+        Command Description
+    </button>
+</div>
+```
+
+2. **Command Palette Features**:
+   - Commands are copied to clipboard on click
+   - Hover for 1-2 seconds to see the actual command
+   - Organized into collapsible categories
+   - Recently added: "Show Sensor Init Details" command
+
+### Enhanced Command Palette Hover Feature
+
+The terminal page includes an enhanced command palette with delayed hover tooltips:
+
+- **Hover delay**: 1 second before showing actual command
+- **Visual feedback**: Command displays in green monospace font
+- **Auto-restore**: Returns to description when mouse leaves
+- **Implementation**: `static/js/command-palette-enhanced.js`
+
+To customize hover behavior:
+```javascript
+// In command-palette-enhanced.js
+const HOVER_DELAY = 1000; // Milliseconds before showing command
+```
+
+### SSH Connection Management
+
+The application uses a persistent SSH connection manager:
+- **Auto-reconnect**: Automatically reconnects if connection drops
+- **Connection pooling**: Reuses existing connections for efficiency
+- **Host key management**: Auto-clears keys when switching devices
+- **Configuration**: Set credentials in `.env` file
+
+### Real-time Updates
+
+The dashboard uses polling and WebSocket-like patterns for updates:
+- **System info**: Updates every 10 seconds
+- **Connection status**: Checks every 20 seconds  
+- **Diagnostic results**: Stream via Server-Sent Events (SSE)
+
+### Frontend Architecture
+
+- **CSS Framework**: Bootstrap 5 with custom dark theme
+- **Icons**: Google Material Icons
+- **JavaScript**: Vanilla JS with modular components
+- **Responsive**: Mobile-friendly with collapsible sidebars
+
+### Backend Architecture
+
+- **Framework**: Flask with blueprints
+- **SSH Library**: Paramiko for SSH connections
+- **Rate Limiting**: Flask-Limiter for API protection
+- **Environment**: Python virtual environment (venv)
 
 ## Contributing
 

@@ -417,60 +417,70 @@ def ping():
 @app.route('/api/terminal/start', methods=['POST'])
 @limiter.limit("5 per minute")
 def start_terminal():
-    """Start a ttyd terminal server"""
+    """Start a ttyd terminal server with SSH connection to target device"""
     try:
         import subprocess
         import time
+        from dotenv import load_dotenv
         
-        # Kill any existing ttyd instances first
-        subprocess.run("pkill -f 'ttyd.*7681'", shell=True, capture_output=True)
+        # Load environment variables
+        load_dotenv()
+        
+        # Kill any existing ttyd instances on port 7682 first
+        subprocess.run("pkill -f 'ttyd.*7682'", shell=True, capture_output=True)
         time.sleep(0.5)  # Give it time to clean up
         
-        # Start ttyd in background with proper environment
-        # Try safe version first, fallback to regular
-        script_path = Path(__file__).parent / 'start_ttyd_safe.sh'
-        if not script_path.exists():
-            script_path = Path(__file__).parent / 'start_ttyd.sh'
-        if script_path.exists():
-            # Load environment variables from .env
-            from dotenv import load_dotenv
-            load_dotenv()
-            
-            # Pass SSH credentials to the script
-            env = os.environ.copy()
-            env['SSH_USER'] = os.getenv('SSH_USER', 'ubuntu')
-            env['SSH_IP'] = os.getenv('SSH_IP', '192.168.55.1')
-            env['SSH_PASSWORD'] = os.getenv('SSH_PASSWORD', '')
-            
-            # Start ttyd process
-            process = subprocess.Popen([str(script_path)], 
-                                     env=env,
-                                     stdout=subprocess.DEVNULL, 
-                                     stderr=subprocess.DEVNULL)
-            
-            # Wait a moment for ttyd to start
-            time.sleep(1.5)
-            
-            # Check if ttyd started successfully
-            check_result = subprocess.run("pgrep -f 'ttyd.*7681'", shell=True, capture_output=True)
-            if check_result.returncode == 0:
-                pid = check_result.stdout.decode().strip().split('\n')[0]
-                logger.info(f"ttyd started successfully with PID: {pid}")
-                return jsonify({
-                    'status': 'success',
-                    'url': 'http://localhost:7681',
-                    'pid': pid,
-                    'message': 'Terminal server started'
-                })
-            else:
-                return jsonify({
-                    'status': 'error',
-                    'message': 'Failed to start terminal server'
-                }), 500
+        # Get SSH credentials
+        ssh_user = os.getenv('SSH_USER', 'ubuntu')
+        ssh_ip = os.getenv('SSH_IP', '192.168.55.1')
+        ssh_password = os.getenv('SSH_PASSWORD', '')
+        
+        if not ssh_password:
+            return jsonify({
+                'status': 'error',
+                'message': 'SSH password not configured in .env file'
+            }), 500
+        
+        # Start ttyd with SSH connection with better keepalive settings
+        cmd = [
+            'ttyd', '-W', '-p', '7682', '-i', '0.0.0.0',
+            '-t', 'fontSize=14',
+            '-t', 'theme={"background": "#1e1e1e", "foreground": "#ffffff", "cursor": "#00ff00"}',
+            '--', 
+            'sshpass', '-p', ssh_password,
+            'ssh', '-o', 'StrictHostKeyChecking=no', 
+            '-o', 'UserKnownHostsFile=/dev/null',
+            '-o', 'ServerAliveInterval=15',  # Send keepalive every 15 seconds
+            '-o', 'ServerAliveCountMax=4',   # Allow 4 missed keepalives before disconnect
+            '-o', 'TCPKeepAlive=yes',        # Enable TCP keepalive
+            '-o', 'ConnectTimeout=10',       # Connection timeout
+            '-o', 'ConnectionAttempts=3',    # Retry connection 3 times
+            f'{ssh_user}@{ssh_ip}'
+        ]
+        
+        # Start ttyd process
+        process = subprocess.Popen(cmd, 
+                                 stdout=subprocess.DEVNULL, 
+                                 stderr=subprocess.DEVNULL)
+        
+        # Wait a moment for ttyd to start
+        time.sleep(1.5)
+        
+        # Check if ttyd started successfully
+        check_result = subprocess.run("pgrep -f 'ttyd.*7682'", shell=True, capture_output=True)
+        if check_result.returncode == 0:
+            pid = check_result.stdout.decode().strip().split('\n')[0]
+            logger.info(f"ttyd started successfully with PID: {pid}")
+            return jsonify({
+                'status': 'success',
+                'url': 'http://localhost:7682',
+                'pid': pid,
+                'message': 'Terminal server started'
+            })
         else:
             return jsonify({
                 'status': 'error',
-                'message': 'Terminal startup script not found'
+                'message': 'Failed to start terminal server'
             }), 500
             
     except Exception as e:
@@ -488,17 +498,17 @@ def stop_terminal():
         import subprocess
         import time
         
-        # Kill ttyd process
-        result = subprocess.run("pkill -f 'ttyd.*7681'", shell=True, capture_output=True)
+        # Kill ttyd process on port 7682
+        result = subprocess.run("pkill -f 'ttyd.*7682'", shell=True, capture_output=True)
         
         # Wait a moment to ensure it's stopped
         time.sleep(0.5)
         
         # Verify it's stopped
-        check_result = subprocess.run("pgrep -f 'ttyd.*7681'", shell=True, capture_output=True)
+        check_result = subprocess.run("pgrep -f 'ttyd.*7682'", shell=True, capture_output=True)
         if check_result.returncode == 0:
             # Still running, force kill
-            subprocess.run("pkill -9 -f 'ttyd.*7681'", shell=True)
+            subprocess.run("pkill -9 -f 'ttyd.*7682'", shell=True)
             logger.warning("Had to force kill ttyd")
         
         logger.info("ttyd stopped successfully")

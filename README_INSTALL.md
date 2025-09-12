@@ -37,9 +37,12 @@ After installation, you **MUST** configure the `.env` file:
    ```
 
 2. Set these required values:
-   - `FLASK_SECRET_KEY` - Any random string (e.g., `my-super-secret-key-123`)
-   - `SSH_PASSWORD` - The password for your target device
-   - `SSH_HOST` - If different from default `192.168.2.1`
+   - `SSH_PASSWORD` - The SSH password for your target device
+   - `SUDO_PASSWORD` - The sudo password for your target device
+
+3. Optionally adjust these if different from defaults:
+   - `SSH_IP` - Default is `192.168.55.1`
+   - `SSH_USER` - Default is `ubuntu`
 
 3. Save and exit (Ctrl+X, then Y, then Enter)
 
@@ -78,8 +81,9 @@ If you get a "port already in use" error, either:
 
 ### Can't Connect to Target Device
 - Ensure target device is connected via USB
-- Check that SSH_HOST in `.env` matches your device (usually `192.168.2.1`)
-- Verify SSH_PASSWORD is correct
+- Check that SSH_IP in `.env` matches your device (default `192.168.55.1`)
+- Verify SSH_PASSWORD and SUDO_PASSWORD are correct
+- Check SSH_USER matches your device's username (default `ubuntu`)
 
 ### ttyd Installation Fails
 If ttyd doesn't install automatically, you can install it manually:

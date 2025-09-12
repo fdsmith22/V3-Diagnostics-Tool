@@ -122,26 +122,11 @@ if [ ! -f ".env" ]; then
 # V3 Diagnostics Tool Environment Configuration
 # Please fill in the required values
 
-# Flask Configuration
-FLASK_SECRET_KEY=your-secret-key-here-change-this
-FLASK_ENV=production
-FLASK_DEBUG=False
-
 # SSH Configuration for Target Device
-SSH_HOST=192.168.2.1
-SSH_PORT=22
-SSH_USERNAME=admin
-SSH_PASSWORD=your-password-here
-
-# Optional: API Keys (if needed)
-# API_KEY=your-api-key-here
-
-# Optional: Database URL (if using database)
-# DATABASE_URL=sqlite:///v3_diagnostics.db
-
-# Optional: Logging
-LOG_LEVEL=INFO
-LOG_FILE=v3_diagnostics.log
+SSH_USER=ubuntu
+SSH_IP=192.168.55.1
+SSH_PASSWORD=your-ssh-password-here
+SUDO_PASSWORD=your-sudo-password-here
 EOF
     
     echo -e "${YELLOW}"
@@ -153,9 +138,10 @@ EOF
     echo "You MUST edit this file to add your specific configuration:"
     echo ""
     echo "  1. Open: $INSTALL_DIR/.env"
-    echo "  2. Set FLASK_SECRET_KEY to a random string"
-    echo "  3. Set SSH_PASSWORD for your target device"
-    echo "  4. Adjust SSH_HOST if different from 192.168.2.1"
+    echo "  2. Set SSH_PASSWORD for your target device"
+    echo "  3. Set SUDO_PASSWORD for your target device"
+    echo "  4. Adjust SSH_IP if different from 192.168.55.1"
+    echo "  5. Adjust SSH_USER if different from ubuntu"
     echo ""
 else
     echo -e "${YELLOW}.env file already exists - skipping creation${NC}"
@@ -190,7 +176,7 @@ source venv/bin/activate
 pip install -r requirements.txt --quiet
 
 # Check if .env is configured
-if ! grep -q "your-password-here" .env 2>/dev/null; then
+if ! grep -q "your-ssh-password-here\|your-sudo-password-here" .env 2>/dev/null; then
     # .env is configured, start normally
     echo "Starting V3 Diagnostics Tool..."
     python app.py
@@ -204,9 +190,9 @@ else
     echo "Please edit the .env file first:"
     echo "  $INSTALL_DIR/.env"
     echo ""
-    echo "Set at minimum:"
-    echo "  - FLASK_SECRET_KEY"
+    echo "Set these required values:"
     echo "  - SSH_PASSWORD"
+    echo "  - SUDO_PASSWORD"
     echo ""
     read -p "Would you like to edit it now? [Y/n]: " -n 1 -r
     echo
@@ -261,10 +247,14 @@ echo "1. Edit the configuration file:"
 echo "   nano $INSTALL_DIR/.env"
 echo ""
 echo "2. Set these required values:"
-echo "   - FLASK_SECRET_KEY (any random string)"
-echo "   - SSH_PASSWORD (password for your target device)"
+echo "   - SSH_PASSWORD (SSH password for your target device)"
+echo "   - SUDO_PASSWORD (sudo password for your target device)"
 echo ""
-echo "3. Run the application:"
+echo "3. Optionally adjust:"
+echo "   - SSH_IP (default: 192.168.55.1)"
+echo "   - SSH_USER (default: ubuntu)"
+echo ""
+echo "4. Run the application:"
 echo "   v3-diagnostics"
 echo "   OR"
 echo "   $HOME/v3-diagnostics.sh"

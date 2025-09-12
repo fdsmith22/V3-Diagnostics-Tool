@@ -25,20 +25,31 @@
     <div class="row">
         <div class="col-12">
             <div class="card mb-4">
-                <div class="card-header">
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-primary btn-sm" id="startTerminal">
-                            <i class="material-icons align-middle">terminal</i>
-                            <span class="ms-1">Connect</span>
-                        </button>
-                        <button class="btn btn-secondary btn-sm" id="stopTerminal" style="display: none;">
-                            <i class="material-icons align-middle">stop</i>
-                            <span class="ms-1">Disconnect</span>
-                        </button>
-                        <button class="btn btn-secondary btn-sm" id="clearBtn">
-                            <i class="material-icons align-middle">clear_all</i>
-                            <span class="ms-1">Clear</span>
-                        </button>
+                <div class="card-header compact-header">
+                    <div class="terminal-header">
+                        <div class="terminal-tabs" id="terminalTabs">
+                            <div class="tab-item active" data-tab-id="0">
+                                <span class="tab-title">Terminal 1</span>
+                                <button class="tab-close" style="display: none;">×</button>
+                            </div>
+                            <button class="tab-add" id="addTab" title="New Tab (Ctrl+T)">
+                                <i class="material-icons">add</i>
+                            </button>
+                        </div>
+                        <div class="terminal-controls d-flex gap-2">
+                            <button class="btn btn-primary btn-sm" id="startTerminal">
+                                <i class="material-icons align-middle">terminal</i>
+                                <span class="ms-1">Connect</span>
+                            </button>
+                            <button class="btn btn-secondary btn-sm" id="stopTerminal" style="display: none;">
+                                <i class="material-icons align-middle">stop</i>
+                                <span class="ms-1">Disconnect</span>
+                            </button>
+                            <button class="btn btn-secondary btn-sm" id="clearBtn">
+                                <i class="material-icons align-middle">clear_all</i>
+                                <span class="ms-1">Clear</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div class="card-body terminal-card-body">
@@ -47,7 +58,10 @@
                             <p class="text-muted">Click "Connect" to start terminal session</p>
                             <p class="text-muted small">Direct SSH connection to device at 192.168.55.1</p>
                         </div>
-                        <iframe id="terminalFrame" style="display: none;"></iframe>
+                        <!-- Multiple iframes for each tab, hidden by default -->
+                        <div id="terminalFrames">
+                            <iframe id="terminalFrame-0" class="terminal-frame" data-tab-id="0" style="display: none;"></iframe>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -63,6 +77,11 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Add terminal-page class to body to prevent scrolling
     document.body.classList.add('terminal-page');
+    
+    // Terminal tab management
+    let activeTabId = 0;
+    let terminalSessions = {}; // Track sessions {tabId: {port, pid, status, iframe}}
+    let tabCounter = 1; // For naming new tabs
     
     // Handle diagnostics sidebar toggle
     const sidebar = document.querySelector('.sidebar');
@@ -144,107 +163,339 @@ document.addEventListener('DOMContentLoaded', function() {
     const startBtn = document.getElementById('startTerminal');
     const stopBtn = document.getElementById('stopTerminal');
     const clearBtn = document.getElementById('clearBtn');
-    const frame = document.getElementById('terminalFrame');
     const placeholder = document.getElementById('terminalPlaceholder');
+    const addTabBtn = document.getElementById('addTab');
+    const terminalTabs = document.getElementById('terminalTabs');
+    const terminalFrames = document.getElementById('terminalFrames');
     
-    let terminalProcess = null;
-    let ttydWindow = null;
+    // Tab management functions
+    function switchToTab(tabId) {
+        // Update tab UI
+        document.querySelectorAll('.tab-item').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        const newTab = document.querySelector(`.tab-item[data-tab-id="${tabId}"]`);
+        if (newTab) {
+            newTab.classList.add('active');
+        }
+        
+        // Hide all frames first
+        document.querySelectorAll('.terminal-frame').forEach(frame => {
+            frame.style.display = 'none';
+            frame.classList.remove('active-frame');
+        });
+        
+        // Update active tab
+        activeTabId = tabId;
+        
+        // Show active frame or placeholder based on connection status
+        const activeFrame = document.getElementById(`terminalFrame-${tabId}`);
+        if (activeFrame && terminalSessions[tabId] && terminalSessions[tabId].status === 'connected') {
+            activeFrame.style.display = 'block';
+            activeFrame.classList.add('active-frame');
+            placeholder.style.display = 'none';
+        } else {
+            // Show placeholder for disconnected tabs
+            placeholder.style.display = 'block';
+            placeholder.innerHTML = '<p class="text-muted">Click "Connect" to start terminal session</p><p class="text-muted small">Direct SSH connection to device at 192.168.55.1</p>';
+        }
+        
+        // Update button states
+        updateButtonStates();
+    }
     
+    function createTab() {
+        if (Object.keys(terminalSessions).length >= 5) {
+            alert('Maximum 5 terminal tabs allowed');
+            return;
+        }
+        
+        // Find next available tab ID
+        let newTabId = 0;
+        while (newTabId in terminalSessions || document.querySelector(`.tab-item[data-tab-id="${newTabId}"]`)) {
+            newTabId++;
+        }
+        
+        // Create tab element
+        const tabItem = document.createElement('div');
+        tabItem.className = 'tab-item';
+        tabItem.setAttribute('data-tab-id', newTabId);
+        tabItem.innerHTML = `
+            <span class="tab-title">Terminal ${newTabId + 1}</span>
+            <button class="tab-close">×</button>
+        `;
+        
+        // Insert before add button
+        terminalTabs.insertBefore(tabItem, addTabBtn);
+        
+        // Create iframe for this tab
+        const iframe = document.createElement('iframe');
+        iframe.id = `terminalFrame-${newTabId}`;
+        iframe.className = 'terminal-frame';
+        iframe.setAttribute('data-tab-id', newTabId);
+        iframe.style.display = 'none';
+        terminalFrames.appendChild(iframe);
+        
+        // Add click handlers
+        tabItem.addEventListener('click', function(e) {
+            if (!e.target.classList.contains('tab-close')) {
+                switchToTab(newTabId);
+            }
+        });
+        
+        tabItem.querySelector('.tab-close').addEventListener('click', function(e) {
+            e.stopPropagation();
+            closeTab(newTabId);
+        });
+        
+        // Initialize session tracking
+        terminalSessions[newTabId] = {
+            status: 'disconnected',
+            port: null,
+            pid: null,
+            iframe: iframe
+        };
+        
+        // Switch to new tab
+        switchToTab(newTabId);
+        
+        // Update close button visibility
+        updateCloseButtons();
+        
+        return newTabId;
+    }
     
-    startBtn.addEventListener('click', async function() {
+    function closeTab(tabId) {
+        // Don't close if it's the only tab
+        const tabCount = document.querySelectorAll('.tab-item').length;
+        if (tabCount <= 1) {
+            return;
+        }
+        
+        // Stop terminal if running
+        if (terminalSessions[tabId] && terminalSessions[tabId].status === 'connected') {
+            stopTerminalForTab(tabId);
+        }
+        
+        // Remove tab element
+        const tabElement = document.querySelector(`.tab-item[data-tab-id="${tabId}"]`);
+        if (tabElement) {
+            tabElement.remove();
+        }
+        
+        // Remove iframe
+        const iframe = document.getElementById(`terminalFrame-${tabId}`);
+        if (iframe) {
+            iframe.remove();
+        }
+        
+        // Clean up session
+        delete terminalSessions[tabId];
+        
+        // If this was the active tab, switch to another
+        if (activeTabId == tabId) {
+            const remainingTab = document.querySelector('.tab-item');
+            if (remainingTab) {
+                const newTabId = parseInt(remainingTab.getAttribute('data-tab-id'));
+                switchToTab(newTabId);
+            }
+        }
+        
+        // Update close button visibility
+        updateCloseButtons();
+    }
+    
+    function updateCloseButtons() {
+        const tabs = document.querySelectorAll('.tab-item');
+        tabs.forEach(tab => {
+            const closeBtn = tab.querySelector('.tab-close');
+            if (closeBtn) {
+                closeBtn.style.display = tabs.length > 1 ? 'inline-block' : 'none';
+            }
+        });
+    }
+    
+    function updateButtonStates() {
+        const currentSession = terminalSessions[activeTabId];
+        if (currentSession && currentSession.status === 'connected') {
+            startBtn.style.display = 'none';
+            stopBtn.style.display = 'inline-flex';
+        } else {
+            startBtn.style.display = 'inline-flex';
+            stopBtn.style.display = 'none';
+            startBtn.disabled = false;
+            startBtn.innerHTML = '<i class="material-icons align-middle">terminal</i><span class="ms-1">Connect</span>';
+        }
+    }
+    
+    async function startTerminalForTab(tabId) {
         try {
             // Show loading state
             startBtn.disabled = true;
             startBtn.innerHTML = '<i class="material-icons align-middle">hourglass_empty</i><span class="ms-1">Starting...</span>';
             placeholder.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="text-muted mt-3">Starting terminal server...</p>';
             
-            // Start ttyd terminal server
+            // Start ttyd terminal server for this tab
             const response = await fetch('/api/terminal/start', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({backend: 'ttyd'})
+                body: JSON.stringify({backend: 'ttyd', tab_id: tabId})
             });
             
             const data = await response.json();
             
             if (data.status === 'success') {
-                // Show terminal iframe
-                frame.src = 'http://localhost:7682';
-                frame.classList.add('connected');
-                frame.style.display = 'block';
-                placeholder.classList.add('hidden');
-                placeholder.style.display = 'none';
-                startBtn.style.display = 'none';
-                stopBtn.style.display = 'inline-flex';
+                // Get the iframe for this tab
+                const frame = document.getElementById(`terminalFrame-${tabId}`);
                 
-                // Wait for iframe to load
-                frame.onload = function() {
-                    ttydWindow = frame.contentWindow;
+                // Update session info
+                terminalSessions[tabId] = {
+                    status: 'connected',
+                    port: data.port,
+                    pid: data.pid,
+                    iframe: frame
                 };
                 
-                terminalProcess = data.pid;
+                // Show terminal iframe
+                frame.src = data.url;
+                frame.classList.add('connected');
+                
+                // If this is the active tab, show it
+                if (activeTabId == tabId) {
+                    frame.style.display = 'block';
+                    placeholder.style.display = 'none';
+                }
+                
+                // Update button states
+                updateButtonStates();
+                
+                // Update tab visual indicator
+                const tabElement = document.querySelector(`.tab-item[data-tab-id="${tabId}"]`);
+                if (tabElement) {
+                    tabElement.classList.add('connected');
+                }
+                
             } else {
                 // Reset button on error
-                startBtn.disabled = false;
-                startBtn.innerHTML = '<i class="material-icons align-middle">terminal</i><span class="ms-1">Connect</span>';
+                updateButtonStates();
                 placeholder.innerHTML = '<p class="text-muted">Click "Connect" to start terminal session</p><p class="text-muted small">Direct SSH connection to device at 192.168.55.1</p>';
                 alert(data.message || 'Failed to start terminal');
             }
         } catch (error) {
             console.error('Failed to start terminal:', error);
             // Reset button on error
-            startBtn.disabled = false;
-            startBtn.innerHTML = '<i class="material-icons align-middle">terminal</i><span class="ms-1">Connect</span>';
+            updateButtonStates();
             placeholder.innerHTML = '<p class="text-muted">Click "Connect" to start terminal session</p><p class="text-muted small">Direct SSH connection to device at 192.168.55.1</p>';
             alert('Failed to start terminal. Make sure the device is connected.');
         }
-    });
+    }
     
-    stopBtn.addEventListener('click', async function() {
-        if (terminalProcess) {
+    async function stopTerminalForTab(tabId) {
+        const session = terminalSessions[tabId];
+        if (session && session.pid) {
             await fetch('/api/terminal/stop', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({pid: terminalProcess})
+                body: JSON.stringify({tab_id: tabId})
             });
         }
         
-        frame.src = '';
-        frame.classList.remove('connected');
-        frame.style.display = 'none';
-        placeholder.classList.remove('hidden');
-        placeholder.style.display = 'block';
-        placeholder.innerHTML = '<p class="text-muted">Click "Connect" to start terminal session</p><p class="text-muted small">Direct SSH connection to device at 192.168.55.1</p>';
-        startBtn.style.display = 'inline-flex';
-        startBtn.disabled = false;
-        stopBtn.style.display = 'none';
-        terminalProcess = null;
-        ttydWindow = null;
+        // Clear iframe
+        const frame = document.getElementById(`terminalFrame-${tabId}`);
+        if (frame) {
+            frame.src = '';
+            frame.classList.remove('connected');
+            frame.style.display = 'none';
+        }
+        
+        // Update session
+        if (terminalSessions[tabId]) {
+            terminalSessions[tabId].status = 'disconnected';
+            terminalSessions[tabId].port = null;
+            terminalSessions[tabId].pid = null;
+        }
+        
+        // Update tab visual
+        const tabElement = document.querySelector(`.tab-item[data-tab-id="${tabId}"]`);
+        if (tabElement) {
+            tabElement.classList.remove('connected');
+        }
+        
+        // If this is the active tab, show placeholder
+        if (activeTabId == tabId) {
+            placeholder.style.display = 'block';
+            placeholder.innerHTML = '<p class="text-muted">Click "Connect" to start terminal session</p><p class="text-muted small">Direct SSH connection to device at 192.168.55.1</p>';
+            updateButtonStates();
+        }
+    }
+    
+    // Initialize first tab session tracking
+    terminalSessions[0] = {
+        status: 'disconnected',
+        port: null,
+        pid: null,
+        iframe: document.getElementById('terminalFrame-0')
+    };
+    
+    // Add tab click handler for initial tab
+    document.querySelector('.tab-item[data-tab-id="0"]').addEventListener('click', function(e) {
+        if (!e.target.classList.contains('tab-close')) {
+            switchToTab(0);
+        }
+    });
+    
+    // Add close handler for initial tab
+    document.querySelector('.tab-item[data-tab-id="0"] .tab-close').addEventListener('click', function(e) {
+        e.stopPropagation();
+        closeTab(0);
+    });
+    
+    // Add new tab button handler
+    addTabBtn.addEventListener('click', function() {
+        createTab();
+    });
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl+T for new tab
+        if (e.ctrlKey && e.key === 't') {
+            e.preventDefault();
+            createTab();
+        }
+        // Ctrl+W to close current tab
+        if (e.ctrlKey && e.key === 'w') {
+            e.preventDefault();
+            closeTab(activeTabId);
+        }
+        // Ctrl+Tab to switch tabs
+        if (e.ctrlKey && e.key === 'Tab') {
+            e.preventDefault();
+            const tabs = Array.from(document.querySelectorAll('.tab-item'));
+            const currentIndex = tabs.findIndex(tab => tab.getAttribute('data-tab-id') == activeTabId);
+            const nextIndex = (currentIndex + 1) % tabs.length;
+            const nextTabId = tabs[nextIndex].getAttribute('data-tab-id');
+            switchToTab(parseInt(nextTabId));
+        }
+    });
+    
+    
+    startBtn.addEventListener('click', async function() {
+        await startTerminalForTab(activeTabId);
+    });
+    
+    stopBtn.addEventListener('click', async function() {
+        await stopTerminalForTab(activeTabId);
     });
     
     clearBtn.addEventListener('click', function() {
-        // Focus on the iframe and try to send Ctrl+L
-        if (ttydWindow) {
-            frame.focus();
+        // Get current frame
+        const currentFrame = document.getElementById(`terminalFrame-${activeTabId}`);
+        if (currentFrame && terminalSessions[activeTabId] && terminalSessions[activeTabId].status === 'connected') {
+            currentFrame.focus();
             alert('Press Ctrl+L in the terminal to clear the screen');
         }
     });
     
-    // Function to send text to ttyd terminal
-    function sendToTerminal(text) {
-        if (ttydWindow) {
-            try {
-                // ttyd uses WebSocket, we need to send the command via postMessage
-                // First try to access the ttyd terminal directly
-                ttydWindow.postMessage({
-                    type: 'input',
-                    data: text
-                }, '*');
-            } catch (e) {
-                console.error('Failed to send to terminal:', e);
-            }
-        }
-    }
     
     // Override command sidebar behavior for ttyd
     const commandItems = document.querySelectorAll('.command-item');

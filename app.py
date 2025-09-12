@@ -64,6 +64,9 @@ TERMINAL_BACKEND = os.getenv('TERMINAL_BACKEND', 'ssh')  # Options: 'ssh', 'ttyd
 # Initialize terminal manager for PTY sessions
 terminal_manager = None
 
+# Track active ttyd terminals (tab_id -> {port, pid, status})
+active_terminals = {}
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -415,7 +418,7 @@ def ping():
         })
 
 @app.route('/api/terminal/start', methods=['POST'])
-@limiter.limit("5 per minute")
+@limiter.limit("10 per minute")
 def start_terminal():
     """Start a ttyd terminal server with SSH connection to target device"""
     try:
@@ -426,8 +429,39 @@ def start_terminal():
         # Load environment variables
         load_dotenv()
         
-        # Kill any existing ttyd instances on port 7682 first
-        subprocess.run("pkill -f 'ttyd.*7682'", shell=True, capture_output=True)
+        # Get tab_id from request (default to 0 for backward compatibility)
+        data = request.json or {}
+        tab_id = data.get('tab_id', 0)
+        
+        # Validate tab_id (max 5 tabs)
+        if tab_id < 0 or tab_id >= 5:
+            return jsonify({
+                'status': 'error',
+                'message': 'Invalid tab ID. Must be between 0 and 4'
+            }), 400
+        
+        # Calculate port for this tab
+        port = 7682 + tab_id
+        
+        # Check if terminal already exists for this tab
+        if tab_id in active_terminals:
+            # Check if the process is still running
+            pid = active_terminals[tab_id].get('pid')
+            if pid:
+                check_result = subprocess.run(f"ps -p {pid}", shell=True, capture_output=True)
+                if check_result.returncode == 0:
+                    # Terminal already running for this tab
+                    return jsonify({
+                        'status': 'success',
+                        'url': f'http://localhost:{port}',
+                        'port': port,
+                        'tab_id': tab_id,
+                        'pid': pid,
+                        'message': 'Terminal already running for this tab'
+                    })
+        
+        # Kill any existing ttyd instances on this port first
+        subprocess.run(f"pkill -f 'ttyd.*{port}'", shell=True, capture_output=True)
         time.sleep(0.5)  # Give it time to clean up
         
         # Get SSH credentials
@@ -443,7 +477,7 @@ def start_terminal():
         
         # Start ttyd with SSH connection with better keepalive settings
         cmd = [
-            'ttyd', '-W', '-p', '7682', '-i', '0.0.0.0',
+            'ttyd', '-W', '-p', str(port), '-i', '0.0.0.0',
             '-t', 'fontSize=14',
             '-t', 'theme={"background": "#1e1e1e", "foreground": "#ffffff", "cursor": "#00ff00"}',
             '--', 
@@ -467,13 +501,24 @@ def start_terminal():
         time.sleep(1.5)
         
         # Check if ttyd started successfully
-        check_result = subprocess.run("pgrep -f 'ttyd.*7682'", shell=True, capture_output=True)
+        check_result = subprocess.run(f"pgrep -f 'ttyd.*{port}'", shell=True, capture_output=True)
         if check_result.returncode == 0:
             pid = check_result.stdout.decode().strip().split('\n')[0]
-            logger.info(f"ttyd started successfully with PID: {pid}")
+            logger.info(f"ttyd started successfully on port {port} with PID: {pid} for tab {tab_id}")
+            
+            # Store terminal info
+            active_terminals[tab_id] = {
+                'port': port,
+                'pid': pid,
+                'status': 'running',
+                'started_at': datetime.datetime.now().isoformat()
+            }
+            
             return jsonify({
                 'status': 'success',
-                'url': 'http://localhost:7682',
+                'url': f'http://localhost:{port}',
+                'port': port,
+                'tab_id': tab_id,
                 'pid': pid,
                 'message': 'Terminal server started'
             })
@@ -491,27 +536,53 @@ def start_terminal():
         }), 500
 
 @app.route('/api/terminal/stop', methods=['POST'])
-@limiter.limit("5 per minute")
+@limiter.limit("10 per minute")
 def stop_terminal():
-    """Stop ttyd terminal server"""
+    """Stop ttyd terminal server for specific tab or all tabs"""
     try:
         import subprocess
         import time
         
-        # Kill ttyd process on port 7682
-        result = subprocess.run("pkill -f 'ttyd.*7682'", shell=True, capture_output=True)
+        # Get tab_id from request
+        data = request.json or {}
+        tab_id = data.get('tab_id', None)
         
-        # Wait a moment to ensure it's stopped
-        time.sleep(0.5)
-        
-        # Verify it's stopped
-        check_result = subprocess.run("pgrep -f 'ttyd.*7682'", shell=True, capture_output=True)
-        if check_result.returncode == 0:
-            # Still running, force kill
-            subprocess.run("pkill -9 -f 'ttyd.*7682'", shell=True)
-            logger.warning("Had to force kill ttyd")
-        
-        logger.info("ttyd stopped successfully")
+        if tab_id is not None:
+            # Stop specific tab
+            if tab_id in active_terminals:
+                port = active_terminals[tab_id]['port']
+                pid = active_terminals[tab_id].get('pid')
+                
+                # Kill ttyd process on this port
+                result = subprocess.run(f"pkill -f 'ttyd.*{port}'", shell=True, capture_output=True)
+                
+                # Wait a moment to ensure it's stopped
+                time.sleep(0.5)
+                
+                # Verify it's stopped
+                check_result = subprocess.run(f"pgrep -f 'ttyd.*{port}'", shell=True, capture_output=True)
+                if check_result.returncode == 0:
+                    # Still running, force kill
+                    subprocess.run(f"pkill -9 -f 'ttyd.*{port}'", shell=True)
+                    logger.warning(f"Had to force kill ttyd on port {port}")
+                
+                # Remove from active terminals
+                del active_terminals[tab_id]
+                logger.info(f"ttyd on port {port} (tab {tab_id}) stopped successfully")
+            else:
+                return jsonify({
+                    'status': 'warning',
+                    'message': f'No terminal found for tab {tab_id}'
+                })
+        else:
+            # Stop all terminals
+            for tid, term_info in list(active_terminals.items()):
+                port = term_info['port']
+                subprocess.run(f"pkill -f 'ttyd.*{port}'", shell=True, capture_output=True)
+                
+            # Clear all active terminals
+            active_terminals.clear()
+            logger.info("All ttyd terminals stopped successfully")
         
         return jsonify({
             'status': 'success',
@@ -520,6 +591,41 @@ def stop_terminal():
         
     except Exception as e:
         logger.error(f"Failed to stop terminal: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/terminal/list', methods=['GET'])
+def list_terminals():
+    """List all active terminal sessions"""
+    try:
+        import subprocess
+        
+        # Verify which terminals are actually running
+        verified_terminals = {}
+        for tab_id, term_info in active_terminals.items():
+            pid = term_info.get('pid')
+            if pid:
+                # Check if process is still running
+                check_result = subprocess.run(f"ps -p {pid}", shell=True, capture_output=True)
+                if check_result.returncode == 0:
+                    verified_terminals[tab_id] = term_info
+                else:
+                    # Process not running, update status
+                    term_info['status'] = 'stopped'
+        
+        # Update active terminals with verified ones
+        active_terminals.clear()
+        active_terminals.update(verified_terminals)
+        
+        return jsonify({
+            'status': 'success',
+            'terminals': active_terminals,
+            'count': len(active_terminals)
+        })
+    except Exception as e:
+        logger.error(f"Failed to list terminals: {e}")
         return jsonify({
             'status': 'error',
             'message': str(e)

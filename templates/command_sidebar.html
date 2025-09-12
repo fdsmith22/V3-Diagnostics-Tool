@@ -7,30 +7,88 @@
         <i class="material-icons align-middle me-2">code</i>
         Command Palette
       </h6>
+      <!-- Search Bar -->
+      <div class="command-search-container mb-3">
+        <div class="input-group">
+          <span class="input-group-text">
+            <i class="material-icons">search</i>
+          </span>
+          <input type="text" class="form-control" id="commandSearch" placeholder="Search commands...">
+          <button class="btn btn-outline-secondary" type="button" id="clearSearch">
+            <i class="material-icons">clear</i>
+          </button>
+        </div>
+      </div>
     </div>
 
     <div class="command-groups accordion" id="commandAccordion">
+      <!-- Favorites Section -->
+      <div class="accordion-item" id="favoritesSection" style="display: none;">
+        <h2 class="accordion-header" id="favoritesHeader">
+          <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#favoritesCollapse">
+            <i class="material-icons me-2">star</i>
+            Favorites
+          </button>
+        </h2>
+        <div id="favoritesCollapse" class="accordion-collapse collapse show" data-bs-parent="#commandAccordion">
+          <div class="accordion-body">
+            <div class="command-list" id="favoritesList">
+              <!-- Favorite commands will be dynamically added here -->
+            </div>
+          </div>
+        </div>
+      </div>
       <!-- System/Service Commands -->
       <div class="accordion-item">
         <h2 class="accordion-header" id="systemCommandsHeader">
-          <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#systemCommandsCollapse">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#systemCommandsCollapse">
             <i class="material-icons me-2">terminal</i>
             System/Service Commands
           </button>
         </h2>
-        <div id="systemCommandsCollapse" class="accordion-collapse collapse show" data-bs-parent="#commandAccordion">
+        <div id="systemCommandsCollapse" class="accordion-collapse collapse" data-bs-parent="#commandAccordion">
           <div class="accordion-body">
             <div class="command-list">
-              <button class="command-item" data-command="sudo journalctl -u vision_pipeline -f">Monitor Vision Pipeline Logs</button>
-              <button class="command-item" data-command="sudo systemctl restart vision_pipeline">Restart Vision Pipeline</button>
-              <button class="command-item" data-command="sudo systemctl status restart_lte">LTE Service Status</button>
-              <button class="command-item" data-command="uname -a">System Info</button>
-              <button class="command-item" data-command="uptime">Uptime</button>
-              <button class="command-item" data-command="free -h">Memory Usage</button>
-              <button class="command-item" data-command="df -h">Disk Usage</button>
-              <button class="command-item" data-command="top">Process Monitor</button>
-              <button class="command-item" data-command="ps aux | grep python">Python Processes</button>
-              <button class="command-item" data-command="tail code/devMan/settings.json">Show Sensor Init Details</button>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="sudo journalctl -u vision_pipeline -f" data-category="System/Service Commands">Monitor Vision Pipeline Logs</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="sudo systemctl restart vision_pipeline" data-category="System/Service Commands">Restart Vision Pipeline</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="sudo systemctl status restart_lte" data-category="System/Service Commands">LTE Service Status</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="uname -a" data-category="System/Service Commands">System Info</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="uptime" data-category="System/Service Commands">Uptime</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="free -h" data-category="System/Service Commands">Memory Usage</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="df -h" data-category="System/Service Commands">Disk Usage</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="top" data-category="System/Service Commands">Process Monitor</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="ps aux | grep python" data-category="System/Service Commands">Python Processes</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="tail code/devMan/settings.json" data-category="System/Service Commands">Show Sensor Init Details</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
             </div>
           </div>
         </div>
@@ -47,13 +105,34 @@
         <div id="powerCommandsCollapse" class="accordion-collapse collapse" data-bs-parent="#commandAccordion">
           <div class="accordion-body">
             <div class="command-list">
-              <button class="command-item" data-command="sudo nvpmodel -q">Check Current Power Mode</button>
-              <button class="command-item" data-command="sudo nvpmodel -m 0">Set Full Power Mode (Mode 0)</button>
-              <button class="command-item" data-command="sudo nvpmodel -m 1">Set Low Power Mode (Single Camera)</button>
-              <button class="command-item" data-command="sudo nvpmodel -m 2">Set Intermediate Power Mode (Dual Camera)</button>
-              <button class="command-item" data-command="tegrastats">Tegra Statistics</button>
-              <button class="command-item" data-command="nvidia-smi">NVIDIA GPU Status</button>
-              <button class="command-item" data-command="jetson_clocks --show">Clock Status</button>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="sudo nvpmodel -q" data-category="Power Mode Commands">Check Current Power Mode</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="sudo nvpmodel -m 0" data-category="Power Mode Commands">Set Full Power Mode (Mode 0)</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="sudo nvpmodel -m 1" data-category="Power Mode Commands">Set Low Power Mode (Single Camera)</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="sudo nvpmodel -m 2" data-category="Power Mode Commands">Set Intermediate Power Mode (Dual Camera)</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="tegrastats" data-category="Power Mode Commands">Tegra Statistics</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="nvidia-smi" data-category="Power Mode Commands">NVIDIA GPU Status</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="jetson_clocks --show" data-category="Power Mode Commands">Clock Status</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
             </div>
           </div>
         </div>
@@ -70,15 +149,42 @@
         <div id="networkCommandsCollapse" class="accordion-collapse collapse" data-bs-parent="#commandAccordion">
           <div class="accordion-body">
             <div class="command-list">
-              <button class="command-item" data-command="nmcli d wifi">List WiFi Networks</button>
-              <button class="command-item" data-command="sudo cat /etc/NetworkManager/system-connections/belkin.070">Check Network Config</button>
-              <button class="command-item" data-command="sudo nmcli c up belkin.070">Connect to belkin.070</button>
-              <button class="command-item" data-command="sudo nmcli d wifi connect belkin.070 password 22secondBELIEVEbuilding23__">Connect with Password</button>
-              <button class="command-item" data-command="sudo nmcli c up stream">Connect to Stream Network</button>
-              <button class="command-item" data-command="nmcli device status">Network Manager Status</button>
-              <button class="command-item" data-command="ip addr">IP Addresses</button>
-              <button class="command-item" data-command="ping -c 4 8.8.8.8">Test Connectivity</button>
-              <button class="command-item" data-command="netstat -tuln">Open Ports</button>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="nmcli d wifi" data-category="Network/WiFi Commands">List WiFi Networks</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="sudo cat /etc/NetworkManager/system-connections/belkin.070" data-category="Network/WiFi Commands">Check Network Config</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="sudo nmcli c up belkin.070" data-category="Network/WiFi Commands">Connect to belkin.070</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="sudo nmcli d wifi connect belkin.070 password 22secondBELIEVEbuilding23__" data-category="Network/WiFi Commands">Connect with Password</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="sudo nmcli c up stream" data-category="Network/WiFi Commands">Connect to Stream Network</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="nmcli device status" data-category="Network/WiFi Commands">Network Manager Status</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="ip addr" data-category="Network/WiFi Commands">IP Addresses</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="ping -c 4 8.8.8.8" data-category="Network/WiFi Commands">Test Connectivity</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="netstat -tuln" data-category="Network/WiFi Commands">Open Ports</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
             </div>
           </div>
         </div>
@@ -95,13 +201,34 @@
         <div id="modemCommandsCollapse" class="accordion-collapse collapse" data-bs-parent="#commandAccordion">
           <div class="accordion-body">
             <div class="command-list">
-              <button class="command-item" data-command="sudo mmcli -m 0">Modem Info</button>
-              <button class="command-item" data-command="sudo mmcli -L | grep -oE '/Modem/[0-9]+' | grep -oE '[0-9]+'">Get Modem Port</button>
-              <button class="command-item" data-command="sudo mmcli --sim 0 | grep -P 'iccid|ICCID' | grep -oE '[0-9]+'">Get SIM ICCID</button>
-              <button class="command-item" data-command="sudo mmcli -L">List All Modems</button>
-              <button class="command-item" data-command="sudo mmcli -m 0 --signal">Signal Strength</button>
-              <button class="command-item" data-command="sudo mmcli -m 0 --location-get">Location Info</button>
-              <button class="command-item" data-command="sudo systemctl status ModemManager">ModemManager Status</button>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="sudo mmcli -m 0" data-category="Modem/LTE Commands">Modem Info</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="sudo mmcli -L | grep -oE '/Modem/[0-9]+' | grep -oE '[0-9]+'" data-category="Modem/LTE Commands">Get Modem Port</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="sudo mmcli --sim 0 | grep -P 'iccid|ICCID' | grep -oE '[0-9]+'" data-category="Modem/LTE Commands">Get SIM ICCID</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="sudo mmcli -L" data-category="Modem/LTE Commands">List All Modems</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="sudo mmcli -m 0 --signal" data-category="Modem/LTE Commands">Signal Strength</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="sudo mmcli -m 0 --location-get" data-category="Modem/LTE Commands">Location Info</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="sudo systemctl status ModemManager" data-category="Modem/LTE Commands">ModemManager Status</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
             </div>
           </div>
         </div>
@@ -118,11 +245,26 @@
         <div id="cameraCommandsCollapse" class="accordion-collapse collapse" data-bs-parent="#commandAccordion">
           <div class="accordion-body">
             <div class="command-list">
-              <button class="command-item" data-command="v4l2-ctl --list-devices">List Camera Devices</button>
-              <button class="command-item" data-command="ls /dev/video*">Check Video Devices</button>
-              <button class="command-item" data-command="dmesg | grep -i camera">Camera Kernel Logs</button>
-              <button class="command-item" data-command="v4l2-ctl -d /dev/video0 --all">Video0 Details</button>
-              <button class="command-item" data-command="gst-inspect-1.0 | grep -i camera">GStreamer Camera Plugins</button>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="v4l2-ctl --list-devices" data-category="Camera/Video Commands">List Camera Devices</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="ls /dev/video*" data-category="Camera/Video Commands">Check Video Devices</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="dmesg | grep -i camera" data-category="Camera/Video Commands">Camera Kernel Logs</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="v4l2-ctl -d /dev/video0 --all" data-category="Camera/Video Commands">Video0 Details</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="gst-inspect-1.0 | grep -i camera" data-category="Camera/Video Commands">GStreamer Camera Plugins</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
             </div>
           </div>
         </div>
@@ -139,14 +281,38 @@
         <div id="hardwareCommandsCollapse" class="accordion-collapse collapse" data-bs-parent="#commandAccordion">
           <div class="accordion-body">
             <div class="command-list">
-              <button class="command-item" data-command="cat /proc/device-tree/model">Device Model</button>
-              <button class="command-item" data-command="hwman --version">Hardware Manager Version</button>
-              <button class="command-item" data-command="i2cdetect -y -r 1">I2C Bus Scan</button>
-              <button class="command-item" data-command="lsusb">List USB Devices</button>
-              <button class="command-item" data-command="dmesg | tail -50">Recent Kernel Messages</button>
-              <button class="command-item" data-command="sudo journalctl -p 3 -xb --no-pager | tail -20">Critical System Logs</button>
-              <button class="command-item" data-command="sensors">Temperature Sensors</button>
-              <button class="command-item" data-command="cat /sys/class/thermal/thermal_zone*/temp">Thermal Zones</button>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="cat /proc/device-tree/model" data-category="Hardware/Diagnostic Commands">Device Model</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="hwman --version" data-category="Hardware/Diagnostic Commands">Hardware Manager Version</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="i2cdetect -y -r 1" data-category="Hardware/Diagnostic Commands">I2C Bus Scan</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="lsusb" data-category="Hardware/Diagnostic Commands">List USB Devices</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="dmesg | tail -50" data-category="Hardware/Diagnostic Commands">Recent Kernel Messages</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="sudo journalctl -p 3 -xb --no-pager | tail -20" data-category="Hardware/Diagnostic Commands">Critical System Logs</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="sensors" data-category="Hardware/Diagnostic Commands">Temperature Sensors</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="cat /sys/class/thermal/thermal_zone*/temp" data-category="Hardware/Diagnostic Commands">Thermal Zones</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
             </div>
           </div>
         </div>
@@ -163,13 +329,34 @@
         <div id="dockerCommandsCollapse" class="accordion-collapse collapse" data-bs-parent="#commandAccordion">
           <div class="accordion-body">
             <div class="command-list">
-              <button class="command-item" data-command="docker ps">Running Containers</button>
-              <button class="command-item" data-command="docker ps -a">All Containers</button>
-              <button class="command-item" data-command="docker images">List Images</button>
-              <button class="command-item" data-command="docker logs -f --tail 50">Container Logs</button>
-              <button class="command-item" data-command="docker stats --no-stream">Container Stats</button>
-              <button class="command-item" data-command="docker-compose ps">Compose Status</button>
-              <button class="command-item" data-command="docker system df">Disk Usage</button>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="docker ps" data-category="Docker Commands">Running Containers</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="docker ps -a" data-category="Docker Commands">All Containers</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="docker images" data-category="Docker Commands">List Images</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="docker logs -f --tail 50" data-category="Docker Commands">Container Logs</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="docker stats --no-stream" data-category="Docker Commands">Container Stats</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="docker-compose ps" data-category="Docker Commands">Compose Status</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
+              <div class="command-wrapper">
+                <button class="command-item" data-command="docker system df" data-category="Docker Commands">Disk Usage</button>
+                <button class="favorite-btn" title="Add to favorites"><i class="material-icons">star_border</i></button>
+              </div>
             </div>
           </div>
         </div>

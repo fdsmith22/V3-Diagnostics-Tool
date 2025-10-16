@@ -16,9 +16,15 @@ A comprehensive web-based diagnostic interface for V3 sensor modules with integr
 
 ### Terminal Features
 - **Integrated Web Terminal** - Native SSH terminal via ttyd
-- **Command Palette** - Quick access to common diagnostic commands
+- **Multiple Terminal Tabs** - Up to 5 simultaneous terminal sessions with independent SSH connections (ports 7682-7686)
+- **Session Persistence** - Each tab maintains its own state and connection across tab switches
+- **Command Palette** - Quick access to common diagnostic commands with enhanced features:
+  - **Search Functionality** - Search both command labels and actual commands
+  - **Favorites System** - Save frequently-used commands with localStorage persistence
+  - **Hover Tooltips** - 1-second delayed hover reveals the actual command
 - **Persistent SSH Connection** - Optimized connection management with auto-reconnect
 - **Auto Host Key Management** - Automatic SSH key clearing for device switching
+- **Visual Connection Status** - Green pulse indicator for active terminal connections
 
 ### User Interface
 - **Modern Dashboard** - Real-time status updates with WebSocket support
@@ -147,9 +153,14 @@ Access the application at: `http://localhost:5000`
 
 ### Terminal
 1. Click "Terminal" in the navigation bar
-2. Click "Connect" to establish SSH session
-3. Use the command palette for quick commands
-4. Commands are automatically copied to clipboard for pasting
+2. Click "Connect" to establish SSH session in the first tab
+3. Use additional tabs (Tab 2-5) to open multiple simultaneous sessions
+4. Use the command palette for quick commands:
+   - Click any command to copy it to clipboard
+   - Use the search bar to filter commands
+   - Star commands to add them to favorites
+   - Hover over commands for 1 second to see the actual shell command
+5. Each tab maintains its own independent SSH connection and session state
 
 ### Running Diagnostics
 1. Use the diagnostics sidebar (left) for individual tests
@@ -170,8 +181,10 @@ Access the application at: `http://localhost:5000`
 - `POST /api/diagnostic/quick` - Quick health check
 
 ### Terminal
-- `POST /api/terminal/start` - Start ttyd terminal server
+- `POST /api/terminal/start` - Start ttyd terminal server (tab 1, port 7682)
+- `POST /api/terminal/start/<tab_id>` - Start terminal server for specific tab (tabs 1-5, ports 7682-7686)
 - `POST /api/terminal/stop` - Stop terminal server
+- `POST /api/terminal/stop/<tab_id>` - Stop terminal server for specific tab
 
 ## Security Notes
 
@@ -230,12 +243,14 @@ V3-Diagnostics-Tool2/
 │   └── ...
 ├── static/               # Frontend assets
 │   ├── css/             # Stylesheets
-│   │   ├── global-theme.css      # Main theme and components
-│   │   └── terminal-page.css     # Terminal-specific styles
+│   │   ├── global-theme.css           # Main theme and components
+│   │   ├── terminal-page.css          # Terminal-specific styles
+│   │   └── command-sidebar.css        # Command palette styles
 │   └── js/              # JavaScript files
-│       ├── diagnostics.js         # Diagnostic test runner
-│       ├── connection.js          # SSH connection manager
-│       └── command-palette-enhanced.js # Command hover tooltips
+│       ├── diagnostics.js              # Diagnostic test runner
+│       ├── connection.js               # SSH connection manager
+│       ├── command-palette-enhanced.js # Command hover tooltips
+│       └── command-sidebar-enhanced.js # Command search and favorites
 ├── templates/            # HTML templates
 │   ├── base.html              # Base template
 │   ├── index.html             # Dashboard page
@@ -321,13 +336,27 @@ def run():
 2. **Command Palette Features**:
    - Commands are copied to clipboard on click
    - Hover for 1-2 seconds to see the actual command
+   - Search functionality to filter commands
+   - Favorites system with star buttons
    - Organized into collapsible categories
-   - Recently added: "Show Sensor Init Details" command
 
-### Enhanced Command Palette Hover Feature
+### Enhanced Command Palette Features
 
-The terminal page includes an enhanced command palette with delayed hover tooltips:
+The terminal page includes a fully-featured command palette system:
 
+#### Search Functionality
+- **Real-time search**: Filter commands as you type
+- **Dual search**: Searches both command labels and actual shell commands
+- **Instant results**: Commands update immediately
+- **Implementation**: `static/js/command-sidebar-enhanced.js`
+
+#### Favorites System
+- **Star to favorite**: Click star icons to save frequently-used commands
+- **Persistent storage**: Favorites saved in browser localStorage
+- **Quick access**: Favorited commands visually highlighted
+- **Per-category favorites**: Each command category supports favorites
+
+#### Hover Tooltips
 - **Hover delay**: 1 second before showing actual command
 - **Visual feedback**: Command displays in green monospace font
 - **Auto-restore**: Returns to description when mouse leaves

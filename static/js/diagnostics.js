@@ -151,29 +151,43 @@
                                 // Determine status based on output content
                                 let status = 'passed';
                                 let message = '';
-                                
-                                // Check for success indicators first
-                                if (output.includes('✅')) {
-                                    status = 'passed';
-                                    // Find the line with ✅ for the message
-                                    const lines = output.split('\n');
-                                    const successLine = lines.find(line => line.includes('✅'));
-                                    message = successLine || lines[0];
-                                } else if (output.includes('❌') || (output.includes('Error') && !output.includes('Error running') && !output.includes('Error:'))) {
-                                    status = 'failed';
-                                    // Find the line with ❌ for the message
-                                    const lines = output.split('\n');
-                                    const errorLine = lines.find(line => line.includes('❌'));
-                                    message = errorLine || lines[0];
-                                } else if (output.includes('⚠️') || output.includes('Warning')) {
-                                    status = 'warning';
-                                    const lines = output.split('\n');
-                                    const warningLine = lines.find(line => line.includes('⚠️'));
-                                    message = warningLine || lines[0];
+
+                                // Check if the result already has a message field, use it
+                                if (result.message) {
+                                    message = result.message;
+                                    // Determine status from the message
+                                    if (message.includes('❌')) {
+                                        status = 'failed';
+                                    } else if (message.includes('⚠️')) {
+                                        status = 'warning';
+                                    } else if (message.includes('✅')) {
+                                        status = 'passed';
+                                    }
                                 } else {
-                                    message = 'Test completed';
+                                    // Fall back to extracting from output
+                                    // Check for success indicators first
+                                    if (output.includes('✅')) {
+                                        status = 'passed';
+                                        // Find the line with ✅ for the message
+                                        const lines = output.split('\n');
+                                        const successLine = lines.find(line => line.includes('✅'));
+                                        message = successLine || lines[0];
+                                    } else if (output.includes('❌') || (output.includes('Error') && !output.includes('Error running') && !output.includes('Error:'))) {
+                                        status = 'failed';
+                                        // Find the line with ❌ for the message
+                                        const lines = output.split('\n');
+                                        const errorLine = lines.find(line => line.includes('❌'));
+                                        message = errorLine || lines[0];
+                                    } else if (output.includes('⚠️') || output.includes('Warning')) {
+                                        status = 'warning';
+                                        const lines = output.split('\n');
+                                        const warningLine = lines.find(line => line.includes('⚠️'));
+                                        message = warningLine || lines[0];
+                                    } else {
+                                        message = 'Test completed';
+                                    }
                                 }
-                                
+
                                 formattedResults[test] = {
                                     status: status,
                                     message: message,
@@ -277,29 +291,43 @@
                                 const output = result.output || result;
                                 let status = 'passed';
                                 let message = '';
-                                
-                                // Check for success indicators first
-                                if (output.includes('✅')) {
-                                    status = 'passed';
-                                    // Find the line with ✅ for the message
-                                    const lines = output.split('\n');
-                                    const successLine = lines.find(line => line.includes('✅'));
-                                    message = successLine || lines[0];
-                                } else if (output.includes('❌')) {
-                                    status = 'failed';
-                                    // Find the line with ❌ for the message
-                                    const lines = output.split('\n');
-                                    const errorLine = lines.find(line => line.includes('❌'));
-                                    message = errorLine || lines[0];
-                                } else if (output.includes('⚠️') || output.includes('Warning')) {
-                                    status = 'warning';
-                                    const lines = output.split('\n');
-                                    const warningLine = lines.find(line => line.includes('⚠️'));
-                                    message = warningLine || lines[0];
+
+                                // Check if the result already has a message field, use it
+                                if (result.message) {
+                                    message = result.message;
+                                    // Determine status from the message
+                                    if (message.includes('❌')) {
+                                        status = 'failed';
+                                    } else if (message.includes('⚠️')) {
+                                        status = 'warning';
+                                    } else if (message.includes('✅')) {
+                                        status = 'passed';
+                                    }
                                 } else {
-                                    message = 'Test completed';
+                                    // Fall back to extracting from output
+                                    // Check for success indicators first
+                                    if (output.includes('✅')) {
+                                        status = 'passed';
+                                        // Find the line with ✅ for the message
+                                        const lines = output.split('\n');
+                                        const successLine = lines.find(line => line.includes('✅'));
+                                        message = successLine || lines[0];
+                                    } else if (output.includes('❌')) {
+                                        status = 'failed';
+                                        // Find the line with ❌ for the message
+                                        const lines = output.split('\n');
+                                        const errorLine = lines.find(line => line.includes('❌'));
+                                        message = errorLine || lines[0];
+                                    } else if (output.includes('⚠️') || output.includes('Warning')) {
+                                        status = 'warning';
+                                        const lines = output.split('\n');
+                                        const warningLine = lines.find(line => line.includes('⚠️'));
+                                        message = warningLine || lines[0];
+                                    } else {
+                                        message = 'Test completed';
+                                    }
                                 }
-                                
+
                                 formattedResults[test] = {
                                     status: status,
                                     message: message,
@@ -310,29 +338,43 @@
                             // Single test format
                             let status = 'passed';
                             let message = '';
-                            
-                            // Check for success indicators first
-                            if (outputText.includes('✅')) {
-                                status = 'passed';
-                                // Find the line with ✅ for the message
-                                const lines = outputText.split('\n');
-                                const successLine = lines.find(line => line.includes('✅'));
-                                message = successLine || lines[0];
-                            } else if (outputText.includes('❌')) {
-                                status = 'failed';
-                                // Find the line with ❌ for the message
-                                const lines = outputText.split('\n');
-                                const errorLine = lines.find(line => line.includes('❌'));
-                                message = errorLine || lines[0];
-                            } else if (outputText.includes('⚠️') || outputText.includes('Warning')) {
-                                status = 'warning';
-                                const lines = outputText.split('\n');
-                                const warningLine = lines.find(line => line.includes('⚠️'));
-                                message = warningLine || lines[0];
+
+                            // Check if response.data has a message field, use it
+                            if (response.data && response.data.message) {
+                                message = response.data.message;
+                                // Determine status from the message
+                                if (message.includes('❌')) {
+                                    status = 'failed';
+                                } else if (message.includes('⚠️')) {
+                                    status = 'warning';
+                                } else if (message.includes('✅')) {
+                                    status = 'passed';
+                                }
                             } else {
-                                message = 'Test completed';
+                                // Fall back to extracting from output
+                                // Check for success indicators first
+                                if (outputText.includes('✅')) {
+                                    status = 'passed';
+                                    // Find the line with ✅ for the message
+                                    const lines = outputText.split('\n');
+                                    const successLine = lines.find(line => line.includes('✅'));
+                                    message = successLine || lines[0];
+                                } else if (outputText.includes('❌')) {
+                                    status = 'failed';
+                                    // Find the line with ❌ for the message
+                                    const lines = outputText.split('\n');
+                                    const errorLine = lines.find(line => line.includes('❌'));
+                                    message = errorLine || lines[0];
+                                } else if (outputText.includes('⚠️') || outputText.includes('Warning')) {
+                                    status = 'warning';
+                                    const lines = outputText.split('\n');
+                                    const warningLine = lines.find(line => line.includes('⚠️'));
+                                    message = warningLine || lines[0];
+                                } else {
+                                    message = 'Test completed';
+                                }
                             }
-                            
+
                             formattedResults[testName] = {
                                 status: status,
                                 message: message,

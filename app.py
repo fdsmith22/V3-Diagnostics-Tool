@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify, request, send_from_directory, session
+from flask import Flask, render_template, jsonify, request, send_from_directory, session, Response
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -20,6 +20,9 @@ import contextlib
 import logging.handlers
 from typing import List
 import warnings
+import threading
+import time
+from collections import deque
 warnings.filterwarnings("ignore", category=UserWarning, module="flask_limiter")
 
 # === App Setup ===
@@ -76,6 +79,11 @@ def terminal():
     """Terminal using ttyd for native experience"""
     return render_template('terminal_ttyd.html')
 
+@app.route('/camera')
+def camera():
+    """Camera testing page for viewing live streams"""
+    return render_template('camera.html')
+
 def capture_output():
     stdout = io.StringIO()
     with contextlib.redirect_stdout(stdout):
@@ -108,6 +116,144 @@ def get_primary_ip() -> str:
     except Exception as e:
         logger.error(f"Error getting primary IP: {e}")
         return '127.0.0.1'
+
+# === UDP Camera Streaming Infrastructure ===
+class UDPCameraReceiver:
+    """Receives JPEG frames via UDP from GStreamer on remote device"""
+
+    def __init__(self, port, buffer_size=10):
+        self.port = port
+        self.buffer = deque(maxlen=buffer_size)  # Store last N frames
+        self.running = False
+        self.thread = None
+        self.sock = None
+        self.last_frame_time = time.time()
+        self.lock = threading.Lock()
+
+    def start(self):
+        """Start UDP receiver thread"""
+        if self.running:
+            return
+
+        self.running = True
+        self.thread = threading.Thread(target=self._receive_loop, daemon=True)
+        self.thread.start()
+        logger.info(f"Started UDP receiver on port {self.port}")
+
+    def stop(self):
+        """Stop UDP receiver thread"""
+        self.running = False
+        if self.sock:
+            try:
+                self.sock.close()
+            except:
+                pass
+        if self.thread and self.thread.is_alive():
+            self.thread.join(timeout=2)
+        logger.info(f"Stopped UDP receiver on port {self.port}")
+
+    def _receive_loop(self):
+        """Main UDP receiving loop - assembles JPEG frames from UDP packets"""
+        try:
+            self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 2 * 1024 * 1024)  # 2MB buffer
+            self.sock.bind(("0.0.0.0", self.port))
+            self.sock.settimeout(0.1)  # 100ms timeout for clean shutdown
+
+            jpeg_buffer = bytearray()
+
+            while self.running:
+                try:
+                    data, addr = self.sock.recvfrom(65507)  # Max UDP packet size
+
+                    # Append data to buffer
+                    jpeg_buffer.extend(data)
+
+                    # Look for complete JPEG frame (starts with FFD8, ends with FFD9)
+                    start_idx = jpeg_buffer.find(b'\xff\xd8')
+                    end_idx = jpeg_buffer.find(b'\xff\xd9')
+
+                    if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
+                        # Extract complete JPEG frame
+                        frame = bytes(jpeg_buffer[start_idx:end_idx + 2])
+
+                        with self.lock:
+                            self.buffer.append(frame)
+                            self.last_frame_time = time.time()
+
+                        # Remove processed data from buffer
+                        jpeg_buffer = jpeg_buffer[end_idx + 2:]
+
+                except socket.timeout:
+                    continue
+                except Exception as e:
+                    if self.running:
+                        logger.error(f"UDP receive error on port {self.port}: {e}")
+
+        except Exception as e:
+            logger.error(f"Failed to start UDP receiver on port {self.port}: {e}")
+        finally:
+            if self.sock:
+                try:
+                    self.sock.close()
+                except:
+                    pass
+
+    def get_latest_frame(self):
+        """Get the most recent frame (thread-safe)"""
+        with self.lock:
+            if len(self.buffer) > 0:
+                return self.buffer[-1]
+        return None
+
+    def is_active(self):
+        """Check if receiving frames recently"""
+        with self.lock:
+            return (time.time() - self.last_frame_time) < 2.0  # Active if frame within 2 seconds
+
+class CameraStreamManager:
+    """Manages multiple UDP camera receivers"""
+
+    def __init__(self):
+        self.receivers = {}  # camera_port -> UDPCameraReceiver
+        self.base_port = 5000
+        self.lock = threading.Lock()
+
+    def start_receiver(self, camera_port):
+        """Start UDP receiver for specific camera port (0-5)"""
+        with self.lock:
+            if camera_port in self.receivers:
+                return  # Already running
+
+            udp_port = self.base_port + camera_port
+            receiver = UDPCameraReceiver(udp_port)
+            receiver.start()
+            self.receivers[camera_port] = receiver
+            logger.info(f"Started UDP receiver for camera {camera_port} on port {udp_port}")
+
+    def stop_receiver(self, camera_port):
+        """Stop UDP receiver for specific camera port"""
+        with self.lock:
+            if camera_port in self.receivers:
+                self.receivers[camera_port].stop()
+                del self.receivers[camera_port]
+                logger.info(f"Stopped UDP receiver for camera {camera_port}")
+
+    def get_receiver(self, camera_port):
+        """Get receiver for camera port (thread-safe)"""
+        with self.lock:
+            return self.receivers.get(camera_port)
+
+    def stop_all(self):
+        """Stop all receivers"""
+        with self.lock:
+            for camera_port in list(self.receivers.keys()):
+                self.receivers[camera_port].stop()
+            self.receivers.clear()
+            logger.info("Stopped all UDP receivers")
+
+# Global camera stream manager
+camera_manager = CameraStreamManager()
 
 @socketio.on('connect')
 @limiter.limit("60 per minute")
@@ -671,7 +817,7 @@ def reset_connection():
     try:
         from utils.ssh_persistent import reset_ssh_connection
         success, message = reset_ssh_connection()
-        
+
         if success:
             logger.info("SSH connection reset successfully")
             return jsonify({
@@ -689,6 +835,368 @@ def reset_connection():
         return jsonify({
             'status': 'error',
             'message': f"Failed to reset connection: {str(e)}"
+        }), 500
+
+# === Camera API Routes ===
+@app.route('/api/camera/start', methods=['POST'])
+@limiter.limit("10 per minute")
+def start_camera_stream():
+    """Start GStreamer UDP stream on device and Flask UDP receiver"""
+    from utils.ssh_interface import run_ssh_command
+
+    try:
+        data = request.get_json()
+        camera_port = data.get('camera_port', 0)
+
+        if camera_port not in range(6):  # Ports 0-5
+            return jsonify({
+                'status': 'error',
+                'message': 'Invalid camera port. Must be 0-5.'
+            }), 400
+
+        logger.info(f"Starting camera stream on port {camera_port}")
+
+        # Get Flask server IP on USB network (device is at 192.168.55.1)
+        # Use USB network IP since device is connected via USB
+        flask_server_ip = "192.168.55.100"  # USB network IP
+        udp_port = 5000 + camera_port
+
+        # Start UDP receiver on Flask server first
+        camera_manager.start_receiver(camera_port)
+
+        # Kill any existing GStreamer processes on this port first
+        # Match on log file name to ensure we kill the right process
+        kill_cmd = f"pkill -f 'gst_camera_{camera_port}.log' || true"
+        run_ssh_command(kill_cmd)
+
+        # Start GStreamer pipeline with UDP sender
+        # Send raw JPEG frames directly via UDP (no RTP encapsulation)
+        # Based on reference pipeline - no backslash escapes needed in single quotes
+        # Start GStreamer pipeline in background
+        gst_cmd = (
+            f"gst-launch-1.0 -e "
+            f"nvarguscamerasrc sensor-position={camera_port} ! "
+            f"'video/x-raw(memory:NVMM), width=1280, height=720, format=NV12, framerate=30/1' ! "
+            f"nvvidconv ! 'video/x-raw, format=I420' ! "
+            f"jpegenc quality=50 ! "
+            f"udpsink host={flask_server_ip} port={udp_port} sync=false "
+            f">/tmp/gst_camera_{camera_port}.log 2>&1 &"
+        )
+
+        result = run_ssh_command(gst_cmd, timeout=5)
+
+        # Wait briefly for stream to initialize
+        time.sleep(1)
+
+        logger.info(f"Camera {camera_port} streaming to {flask_server_ip}:{udp_port}")
+        return jsonify({
+            'status': 'success',
+            'message': f'Camera stream started on port {camera_port}',
+            'camera_port': camera_port,
+            'stream_url': f'/api/camera/stream/{camera_port}',
+            'udp_port': udp_port
+        })
+
+    except Exception as e:
+        logger.error(f"Error starting camera stream: {str(e)}")
+        # Clean up receiver if it was started
+        camera_manager.stop_receiver(camera_port)
+        return jsonify({
+            'status': 'error',
+            'message': f'Failed to start camera stream: {str(e)}'
+        }), 500
+
+@app.route('/api/camera/stop', methods=['POST'])
+@limiter.limit("10 per minute")
+def stop_camera_stream():
+    """Stop GStreamer stream on device and UDP receiver"""
+    try:
+        data = request.get_json()
+        camera_port = data.get('camera_port', 0)
+
+        if camera_port not in range(6):
+            return jsonify({
+                'status': 'error',
+                'message': 'Invalid camera port. Must be 0-5.'
+            }), 400
+
+        logger.info(f"Stopping camera stream on port {camera_port}")
+
+        # Stop UDP receiver on Flask server FIRST (local operation, fast)
+        logger.info("Step 1: Stopping UDP receiver")
+        try:
+            camera_manager.stop_receiver(camera_port)
+            logger.info("Step 2: UDP receiver stopped")
+        except Exception as e:
+            logger.error(f"Error stopping UDP receiver: {e}")
+
+        # Kill GStreamer process on device (can be fire-and-forget)
+        logger.info("Step 3: Killing GStreamer process")
+        try:
+            import subprocess
+            # Use subprocess directly to avoid SSH module import blocking
+            ssh_cmd = f"sshpass -p '{os.getenv('SSH_PASSWORD')}' ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=2 {os.getenv('SSH_USER')}@{os.getenv('SSH_IP')} 'killall -9 gst-launch-1.0 2>/dev/null || true' &"
+            subprocess.Popen(ssh_cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            logger.info("Step 4: GStreamer kill command sent (background)")
+        except Exception as e:
+            logger.error(f"Error killing GStreamer: {e}")
+
+        logger.info(f"Step 5: Camera stream stopped on port {camera_port}")
+        return jsonify({
+            'status': 'success',
+            'message': f'Camera stream stopped on port {camera_port}'
+        })
+
+    except Exception as e:
+        logger.error(f"Error stopping camera stream: {str(e)}")
+        # Try to clean up receiver anyway
+        camera_manager.stop_receiver(camera_port)
+        return jsonify({
+            'status': 'warning',
+            'message': f'Stream may already be stopped: {str(e)}'
+        })
+
+@app.route('/api/camera/stream/<int:camera_port>')
+def stream_camera(camera_port):
+    """Stream MJPEG from UDP receiver to browser"""
+    if camera_port not in range(6):
+        return jsonify({'error': 'Invalid camera port'}), 400
+
+    def generate_mjpeg_stream():
+        """Generate MJPEG stream from UDP receiver buffer"""
+        receiver = camera_manager.get_receiver(camera_port)
+
+        if not receiver:
+            # Return error frame if receiver not started
+            logger.warning(f"Stream requested for camera {camera_port} but receiver not started")
+            error_frame = create_error_frame("Camera not started. Please start the stream first.")
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + error_frame + b'\r\n')
+            return
+
+        last_frame = None
+        no_frame_count = 0
+        max_wait_cycles = 100  # ~10 seconds at 100ms per cycle
+
+        while True:
+            frame = receiver.get_latest_frame()
+
+            if frame and frame != last_frame:
+                # New frame available - send it
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+                last_frame = frame
+                no_frame_count = 0
+            else:
+                # No new frame - wait a bit
+                no_frame_count += 1
+                if no_frame_count > max_wait_cycles:
+                    # Stream timeout - no frames for too long
+                    logger.warning(f"Stream timeout for camera {camera_port} - no frames received")
+                    error_frame = create_error_frame("Stream timeout. No frames received.")
+                    yield (b'--frame\r\n'
+                           b'Content-Type: image/jpeg\r\n\r\n' + error_frame + b'\r\n')
+                    break
+
+                time.sleep(0.033)  # ~30 FPS max
+
+    return Response(
+        generate_mjpeg_stream(),
+        mimetype='multipart/x-mixed-replace; boundary=frame'
+    )
+
+def create_error_frame(message):
+    """Create a minimal JPEG error frame with text overlay"""
+    # For now, return a simple 1x1 red pixel JPEG
+    # In production, you could use PIL/Pillow to create a proper error image with text
+    # This is a minimal valid JPEG (1x1 red pixel)
+    import base64
+    minimal_jpeg = base64.b64decode(
+        '/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0a'
+        'HBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIy'
+        'MjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAABAAEDASIA'
+        'AhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEB'
+        'AQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCwAA//2Q=='
+    )
+    logger.info(f"Creating error frame: {message}")
+    return minimal_jpeg
+
+@app.route('/api/camera/detect', methods=['GET'])
+@limiter.limit("10 per minute")
+def detect_cameras():
+    """Detect available cameras on the device using v4l2-ctl"""
+    from utils.ssh_interface import run_ssh_command
+
+    try:
+        logger.info("Detecting cameras")
+
+        # Use v4l2-ctl to detect cameras (same method as check_camera.py)
+        v4l2_output = run_ssh_command("v4l2-ctl --list-devices 2>/dev/null")
+
+        # Parse IMX462 and IMX662 devices
+        cameras = []
+        detected_ports = set()
+
+        for line in v4l2_output.splitlines():
+            # Look for IMX462 or IMX662 cameras
+            if 'imx462' in line.lower() or 'imx662' in line.lower():
+                camera_type = 'IMX462' if 'imx462' in line.lower() else 'IMX662'
+
+                # Extract CSI port from platform string
+                # Format: "platform:tegra-capture-vi:1):" or "platform:tegra-capture-vi:3):"
+                if "platform:tegra-capture-vi:" in line:
+                    port_part = line.split("platform:tegra-capture-vi:")[1]
+                    # Extract just the number before the ")"
+                    csi_port = port_part.split(")")[0].strip()
+                    detected_ports.add(csi_port)
+
+                    cameras.append({
+                        'port': csi_port,
+                        'type': camera_type,
+                        'device': f'/dev/video{csi_port}',
+                        'available': True,
+                        'description': f'{camera_type} on CSI port {csi_port}'
+                    })
+
+        # Add placeholder entries for ports 0-5 that weren't detected
+        for port in range(6):
+            port_str = str(port)
+            if port_str not in detected_ports:
+                cameras.append({
+                    'port': port_str,
+                    'type': None,
+                    'device': f'/dev/video{port}',
+                    'available': False,
+                    'description': f'No camera on port {port}'
+                })
+
+        # Sort by port number
+        cameras.sort(key=lambda x: int(x['port']))
+
+        logger.info(f"Detected {len(detected_ports)} cameras: {detected_ports}")
+        return jsonify({
+            'status': 'success',
+            'cameras': cameras,
+            'total_detected': len(detected_ports),
+            'v4l2_output': v4l2_output
+        })
+
+    except Exception as e:
+        logger.error(f"Error detecting cameras: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Failed to detect cameras: {str(e)}'
+        }), 500
+
+@app.route('/api/camera/led/toggle', methods=['POST'])
+@limiter.limit("60 per minute")
+def toggle_detection_led():
+    """Toggle detection LED for a specific camera port via hwman API"""
+    from utils.ssh_interface import run_ssh_command
+
+    try:
+        data = request.get_json()
+        port = data.get('port')
+        state = data.get('state', 'on').lower()
+
+        # Validate port
+        if port is None or port not in range(6):
+            return jsonify({
+                'status': 'error',
+                'message': 'Invalid port. Must be 0-5.'
+            }), 400
+
+        # Validate state
+        if state not in ['on', 'off']:
+            return jsonify({
+                'status': 'error',
+                'message': 'Invalid state. Must be "on" or "off".'
+            }), 400
+
+        # Map physical port (0-5) to CAM number (1-6)
+        cam_number = port + 1
+        led_name = f"DETECTION_LED_CAM{cam_number}"
+
+        logger.info(f"Toggling {led_name} to {state} (physical port {port})")
+
+        # Execute hwman API command via curl
+        curl_cmd = f"curl -s -X POST http://localhost:2000/switch/{led_name}/{state}"
+        result = run_ssh_command(curl_cmd, timeout=10)
+
+        # Check if command executed successfully
+        if result.startswith("Error:"):
+            logger.error(f"LED toggle failed: {result}")
+            return jsonify({
+                'status': 'error',
+                'message': f'Failed to toggle LED: {result}'
+            }), 500
+
+        logger.info(f"LED toggle successful for port {port}: {result}")
+        return jsonify({
+            'status': 'success',
+            'message': f'LED for port {port} turned {state}',
+            'port': port,
+            'cam_number': cam_number,
+            'led_name': led_name,
+            'state': state,
+            'response': result
+        })
+
+    except Exception as e:
+        logger.error(f"Error toggling LED: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Failed to toggle LED: {str(e)}'
+        }), 500
+
+@app.route('/api/hardware/power/toggle', methods=['POST'])
+@limiter.limit("60 per minute")
+def toggle_power_switch():
+    """Toggle power output switch via hwman API"""
+    from utils.ssh_interface import run_ssh_command
+
+    try:
+        data = request.get_json()
+        switch_name = data.get('switch')
+        state = data.get('state', 'on').lower()
+
+        # Validate switch name
+        valid_switches = [
+            'PWR_3V3_SYS', 'PWR_5V0_OUT', 'PWR_12V0_OUT',
+            'PWR_12V0_MISC', 'PWR_5V0_AUX', 'PWR_3V3_GSM', 'PWR_3V3_SSD'
+        ]
+
+        if not switch_name or switch_name not in valid_switches:
+            return jsonify({
+                'status': 'error',
+                'message': f'Invalid switch name. Must be one of: {", ".join(valid_switches)}'
+            }), 400
+
+        # Validate state
+        if state not in ['on', 'off']:
+            return jsonify({
+                'status': 'error',
+                'message': 'Invalid state. Must be "on" or "off".'
+            }), 400
+
+        # Execute hwman API command via curl
+        curl_cmd = f"curl -s -X POST http://localhost:2000/switch/{switch_name}/{state}"
+        result = run_ssh_command(curl_cmd, timeout=10)
+
+        logger.info(f"Power switch {switch_name} toggled to {state}. Response: {result}")
+
+        return jsonify({
+            'status': 'success',
+            'message': f'Power switch {switch_name} turned {state}',
+            'switch': switch_name,
+            'state': state,
+            'response': result
+        })
+    except Exception as e:
+        logger.error(f"Error toggling power switch: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Failed to toggle power switch: {str(e)}'
         }), 500
 
 @app.errorhandler(404)
@@ -816,7 +1324,7 @@ if __name__ == '__main__':
     host = args.host
     
     logger.info(f"Starting V3 Diagnostics Tool on {host}:{port}")
-    
+
     # Use threading mode for better stability with long-running requests
-    socketio.run(app, host=host, port=port, debug=True, allow_unsafe_werkzeug=True,
-                 use_reloader=False, log_output=True)
+    # Run Flask directly instead of socketio to get proper threading for MJPEG streams
+    app.run(host=host, port=port, debug=True, threaded=True, use_reloader=False)

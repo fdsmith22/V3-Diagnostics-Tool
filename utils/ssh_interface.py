@@ -48,11 +48,11 @@ def remove_known_host(ip: str) -> None:
     except Exception as e:
         logger.warning(f"⚠️ Unexpected error removing known host: {e}")
 
-def run_ssh_command(command: str, timeout: int = 60, retry_on_key_error: bool = True) -> str:
+def run_ssh_command(command: str, timeout: int = 60, retry_on_key_error: bool = True, wait_for_exit: bool = True) -> str:
     # Use persistent connection if available
     if USE_PERSISTENT and _persistent_ssh_command:
         try:
-            return _persistent_ssh_command(command, timeout=timeout)
+            return _persistent_ssh_command(command, timeout=timeout, wait_for_exit=wait_for_exit)
         except Exception as e:
             logger.warning(f"Persistent SSH failed, falling back to subprocess: {e}")
     

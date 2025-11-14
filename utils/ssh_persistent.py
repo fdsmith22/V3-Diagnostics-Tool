@@ -131,43 +131,56 @@ class PersistentSSHConnection:
         if not silent:
             logger.info("🔌 SSH connection closed")
     
-    def execute_command(self, command: str, timeout: Optional[int] = None) -> Tuple[bool, str]:
+    def execute_command(self, command: str, timeout: Optional[int] = None, wait_for_exit: bool = True) -> Tuple[bool, str]:
         """
         Execute command over persistent SSH connection.
         Returns (success, output) tuple.
+
+        Args:
+            command: Command to execute
+            timeout: Command timeout in seconds
+            wait_for_exit: Whether to wait for command exit status (set False for pkill commands)
         """
         if timeout is None:
             timeout = self.command_timeout
-            
+
         # Ensure we're connected
         if not self.connect():
             return False, "Failed to establish SSH connection"
-        
+
         try:
             logger.info(f"▶️ Executing: {command}")
-            
+
             # Execute command
+            # Note: get_pty=False allows background processes (&) to persist after SSH session closes
             stdin, stdout, stderr = self.client.exec_command(
                 command,
                 timeout=timeout,
-                get_pty=True  # Get pseudo-terminal for better compatibility
+                get_pty=False
             )
-            
+
             # Set channel timeout
             stdout.channel.settimeout(timeout)
             stderr.channel.settimeout(timeout)
-            
+
             # Read output
             output = stdout.read().decode('utf-8', errors='ignore').strip()
             error = stderr.read().decode('utf-8', errors='ignore').strip()
-            
-            # Get exit status
-            exit_status = stdout.channel.recv_exit_status()
-            
+
+            # Get exit status (unless wait_for_exit is False for fire-and-forget commands)
+            if wait_for_exit:
+                exit_status = stdout.channel.recv_exit_status()
+            else:
+                # For fire-and-forget commands like pkill, don't wait - just close channel
+                stdout.channel.close()
+                exit_status = 0
+                logger.info(f"✅ Command sent (fire-and-forget)")
+
             self.last_activity = time.time()
-            
+
             if exit_status == 0:
-                logger.info(f"✅ Command completed successfully")
+                if wait_for_exit:
+                    logger.info(f"✅ Command completed successfully")
                 return True, output
             else:
                 logger.warning(f"⚠️ Command failed with exit code {exit_status}")
@@ -223,15 +236,20 @@ def get_ssh_connection() -> PersistentSSHConnection:
                 _ssh_connection = PersistentSSHConnection()
     return _ssh_connection
 
-def run_ssh_command(command: str, timeout: int = 60) -> str:
+def run_ssh_command(command: str, timeout: int = 60, wait_for_exit: bool = True) -> str:
     """
     Backward compatible function using persistent connection.
     Default timeout increased to 60 seconds.
+
+    Args:
+        command: Command to execute
+        timeout: Command timeout in seconds
+        wait_for_exit: Whether to wait for exit status (set False for pkill commands)
     """
     try:
         conn = get_ssh_connection()
-        success, output = conn.execute_command(command, timeout=timeout)
-        
+        success, output = conn.execute_command(command, timeout=timeout, wait_for_exit=wait_for_exit)
+
         if success:
             return output
         else:

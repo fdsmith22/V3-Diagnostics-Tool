@@ -545,3 +545,20 @@
     background: rgba(124, 119, 255, 0.6);
 }
 
+/* Collapsible Power Controls */
+.card-header[data-bs-toggle="collapse"] {
+    user-select: none;
+}
+
+.card-header[data-bs-toggle="collapse"]:hover {
+    background: rgba(124, 119, 255, 0.05);
+}
+
+.card-header[data-bs-toggle="collapse"] .material-icons {
+    transition: transform 0.3s ease;
+}
+
+.card-header[data-bs-toggle="collapse"][aria-expanded="true"] .material-icons {
+    transform: rotate(180deg);
+}
+

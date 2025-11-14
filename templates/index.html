@@ -5,18 +5,11 @@
 {% block styles %}
 {{ super() }}
 <link href="{{ url_for('static', filename='css/dashboard-enhanced.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/camera-page.css') }}" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid px-4">
-    <!-- Page Header with just refresh button -->
-    <div class="d-flex justify-content-end mb-3">
-        <button class="btn btn-refresh" id="refresh-status">
-            <i class="material-icons align-middle">refresh</i>
-            <span class="d-none d-sm-inline ms-1">Refresh</span>
-        </button>
-    </div>
-
     <!-- Compact Status Cards Row -->
     <div class="row g-3 mb-4">
         <!-- Connection Status -->
@@ -83,6 +76,53 @@
                     <div class="uptime-display">
                         <span class="uptime-value" id="uptime-value">--</span>
                         <span class="status-card-subtitle" id="last-update">Last updated: --</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Power Output Controls Card - Collapsible -->
+    <div class="card mb-4">
+        <div class="card-header" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#powerControlsCollapse" aria-expanded="false" aria-controls="powerControlsCollapse">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="material-icons align-middle me-2">power</i>
+                    Power Output Controls
+                </h5>
+                <i class="material-icons">expand_more</i>
+            </div>
+        </div>
+        <div class="collapse" id="powerControlsCollapse">
+            <div class="card-body">
+                <small class="d-block text-muted mb-3">Control hardware power outputs</small>
+                <div class="power-control-grid">
+                    <div class="power-control-item" data-switch="PWR_3V3_SYS">
+                        <span class="power-label">3.3V System</span>
+                        <div class="power-toggle-wrapper">
+                            <button class="btn btn-sm btn-outline-secondary power-toggle-btn" data-switch="PWR_3V3_SYS" data-state="on">
+                                <i class="material-icons">power_settings_new</i>
+                                <span class="btn-text">ON</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="power-control-item" data-switch="PWR_5V0_OUT">
+                        <span class="power-label">5V Output</span>
+                        <div class="power-toggle-wrapper">
+                            <button class="btn btn-sm btn-outline-secondary power-toggle-btn" data-switch="PWR_5V0_OUT" data-state="on">
+                                <i class="material-icons">power_settings_new</i>
+                                <span class="btn-text">ON</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="power-control-item" data-switch="PWR_12V0_OUT">
+                        <span class="power-label">12V Output</span>
+                        <div class="power-toggle-wrapper">
+                            <button class="btn btn-sm btn-outline-secondary power-toggle-btn" data-switch="PWR_12V0_OUT" data-state="on">
+                                <i class="material-icons">power_settings_new</i>
+                                <span class="btn-text">ON</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -254,16 +294,6 @@
         }
     }
 
-    // Refresh button
-    const refreshBtn = document.getElementById('refresh-status');
-    refreshBtn.addEventListener('click', function() {
-        this.classList.add('spinning');
-        updateDashboard();
-        setTimeout(() => {
-            this.classList.remove('spinning');
-        }, 1000);
-    });
-
     // Initial load
     updateDashboard();
 
@@ -346,6 +376,82 @@
             </div>
         `;
     };
+
+    // Collapsible card icon rotation
+    const powerControlsCollapse = document.getElementById('powerControlsCollapse');
+    const powerControlsHeader = document.querySelector('[data-bs-target="#powerControlsCollapse"]');
+
+    if (powerControlsCollapse && powerControlsHeader) {
+        powerControlsCollapse.addEventListener('shown.bs.collapse', function () {
+            powerControlsHeader.setAttribute('aria-expanded', 'true');
+        });
+
+        powerControlsCollapse.addEventListener('hidden.bs.collapse', function () {
+            powerControlsHeader.setAttribute('aria-expanded', 'false');
+        });
+    }
+
+    // Power toggle functionality
+    const powerToggleBtns = document.querySelectorAll('.power-toggle-btn');
+
+    powerToggleBtns.forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const switchName = btn.dataset.switch;
+            const currentState = btn.dataset.state;
+            const newState = currentState === 'off' ? 'on' : 'off';
+
+            // Disable button and add loading state
+            btn.disabled = true;
+            btn.classList.add('loading');
+            const originalText = btn.querySelector('.btn-text').textContent;
+            btn.querySelector('.btn-text').textContent = '...';
+
+            try {
+                const response = await fetch('/api/hardware/power/toggle', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        switch: switchName,
+                        state: newState
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    // Update button state
+                    btn.dataset.state = newState;
+
+                    // Update button appearance
+                    if (newState === 'on') {
+                        btn.querySelector('.btn-text').textContent = 'ON';
+                        btn.classList.remove('btn-outline-secondary');
+                        btn.classList.add('btn-outline-success');
+                    } else {
+                        btn.querySelector('.btn-text').textContent = 'OFF';
+                        btn.classList.remove('btn-outline-success');
+                        btn.classList.add('btn-outline-secondary');
+                    }
+
+                    console.log(`Power switch ${switchName} toggled to ${newState} successfully`);
+                } else {
+                    throw new Error(data.message || 'Failed to toggle power switch');
+                }
+            } catch (error) {
+                console.error('Error toggling power switch:', error);
+                alert(`Failed to toggle power switch: ${error.message}`);
+
+                // Restore original text on error
+                btn.querySelector('.btn-text').textContent = originalText;
+            } finally {
+                // Re-enable button and remove loading state
+                btn.disabled = false;
+                btn.classList.remove('loading');
+            }
+        });
+    });
 })();
 </script>
 {% endblock %}

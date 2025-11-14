@@ -1,0 +1,561 @@
+/* Camera Testing Page Styles */
+
+:root {
+    --camera-accent: #7c77ff;
+    --camera-accent-hover: #9d99ff;
+    --stream-active: #00ff88;
+    --stream-inactive: #dc3545;
+}
+
+/* Page Title */
+.page-title {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.page-title .material-icons {
+    color: var(--camera-accent);
+    font-size: 32px;
+}
+
+/* Camera Controls Card */
+.camera-controls-card {
+    height: auto;
+}
+
+.camera-controls-card .card-body {
+    padding: 1.5rem;
+}
+
+/* Camera Port Selector Grid */
+.camera-selector-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+}
+
+.camera-port-btn {
+    background: linear-gradient(135deg, rgba(20, 20, 35, 0.9), rgba(30, 30, 50, 0.9));
+    border: 1px solid rgba(124, 119, 255, 0.3);
+    border-radius: 8px;
+    padding: 1rem 0.5rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.camera-port-btn .material-icons {
+    font-size: 28px;
+    transition: all 0.3s ease;
+}
+
+.camera-port-btn:hover {
+    border-color: var(--camera-accent);
+    background: linear-gradient(135deg, rgba(124, 119, 255, 0.2), rgba(0, 212, 255, 0.1));
+    transform: translateY(-2px);
+    color: var(--text-primary);
+}
+
+.camera-port-btn:hover .material-icons {
+    color: var(--camera-accent);
+    transform: scale(1.1);
+}
+
+.camera-port-btn.active {
+    border-color: var(--camera-accent);
+    background: linear-gradient(135deg, rgba(124, 119, 255, 0.3), rgba(0, 212, 255, 0.2));
+    color: var(--text-primary);
+    box-shadow: 0 0 20px rgba(124, 119, 255, 0.4);
+}
+
+.camera-port-btn.active .material-icons {
+    color: var(--stream-active);
+}
+
+.camera-port-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Available camera indicator */
+.camera-port-btn.camera-available {
+    border-color: var(--stream-active);
+    background: linear-gradient(135deg, rgba(0, 255, 136, 0.15), rgba(0, 212, 255, 0.1));
+    position: relative;
+}
+
+.camera-port-btn.camera-available::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 10px;
+    height: 10px;
+    background: var(--stream-active);
+    border-radius: 50%;
+    box-shadow: 0 0 10px rgba(0, 255, 136, 0.6);
+    animation: pulse-dot 2s ease-in-out infinite;
+}
+
+.camera-port-btn.camera-available .material-icons {
+    color: var(--stream-active);
+}
+
+@keyframes pulse-dot {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.6;
+        transform: scale(1.1);
+    }
+}
+
+/* Stream Control Buttons */
+#start-stream-btn,
+#stop-stream-btn {
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+#start-stream-btn {
+    background: linear-gradient(135deg, #00ff88, #00d4ff);
+    border: none;
+}
+
+#start-stream-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #00ff88, #00d4ff);
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+    transform: translateY(-2px);
+}
+
+#stop-stream-btn {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    border: none;
+}
+
+#stop-stream-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    box-shadow: 0 0 20px rgba(220, 53, 69, 0.5);
+    transform: translateY(-2px);
+}
+
+#start-stream-btn:disabled,
+#stop-stream-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Stream Settings Info List */
+.info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.info-value {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+/* Camera Preview Container */
+.camera-preview-card {
+    height: auto;
+}
+
+.camera-preview-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    max-height: 500px;
+    background: var(--bg-darker);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.camera-preview-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    width: 100%;
+    height: 100%;
+}
+
+.camera-preview-placeholder .material-icons {
+    font-size: 64px;
+    opacity: 0.3;
+    margin-bottom: 1rem;
+}
+
+.camera-preview-placeholder p {
+    max-width: 300px;
+    text-align: center;
+    margin: 0;
+}
+
+.camera-stream-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #000;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.stream-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+/* Preview Status Badge */
+#preview-status-badge {
+    font-size: 0.85rem;
+    padding: 0.35rem 0.75rem;
+}
+
+#preview-status-badge.streaming {
+    background: var(--stream-active) !important;
+    color: #000;
+}
+
+/* Stream Status Display */
+.stream-status-display {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.stream-status-text {
+    color: var(--stream-inactive);
+}
+
+.stream-status-text.active {
+    color: var(--stream-active);
+}
+
+.active-camera-display {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--camera-accent);
+}
+
+/* Connection Indicator */
+.connection-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.connection-indicator .pulse {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--stream-inactive);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.connection-indicator.connected .pulse {
+    background: var(--stream-active);
+}
+
+.connection-indicator .status-text {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.5;
+        transform: scale(1.2);
+    }
+}
+
+/* Camera Detection Log */
+#camera-detection-log {
+    min-height: 200px;
+}
+
+.camera-detection-item {
+    background: rgba(124, 119, 255, 0.05);
+    border: 1px solid rgba(124, 119, 255, 0.2);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.camera-detection-item:hover {
+    background: rgba(124, 119, 255, 0.1);
+    border-color: var(--camera-accent);
+}
+
+.camera-detection-item .material-icons {
+    color: var(--stream-active);
+}
+
+.camera-detection-item.unavailable .material-icons {
+    color: var(--stream-inactive);
+}
+
+/* LED Testing Grid */
+.led-test-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+}
+
+.led-test-item {
+    background: rgba(20, 20, 35, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.led-test-item:hover {
+    background: rgba(30, 30, 50, 0.7);
+    border-color: rgba(124, 119, 255, 0.3);
+}
+
+.led-test-item.camera-available {
+    border-color: var(--stream-active);
+    background: linear-gradient(135deg, rgba(0, 255, 136, 0.15), rgba(0, 212, 255, 0.1));
+    position: relative;
+}
+
+.led-test-item.camera-available::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 8px;
+    height: 8px;
+    background: var(--stream-active);
+    border-radius: 50%;
+    box-shadow: 0 0 10px rgba(0, 255, 136, 0.6);
+    animation: pulse-dot 2s ease-in-out infinite;
+}
+
+.led-port-label {
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.led-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+    min-width: 80px;
+    justify-content: center;
+}
+
+.led-toggle-btn .material-icons {
+    font-size: 18px;
+}
+
+.led-toggle-btn[data-state="off"] {
+    border-color: rgba(108, 117, 125, 0.5);
+    color: var(--text-secondary);
+}
+
+.led-toggle-btn[data-state="on"] {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.3), rgba(255, 152, 0, 0.3));
+    border-color: #ffc107;
+    color: #fff;
+}
+
+.led-toggle-btn[data-state="on"] .material-icons {
+    color: #ffc107;
+}
+
+.led-toggle-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(124, 119, 255, 0.3);
+}
+
+.led-toggle-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.led-toggle-btn.loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+/* Power Control Grid */
+.power-control-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+}
+
+.power-control-item {
+    background: rgba(20, 20, 35, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.power-control-item:hover {
+    background: rgba(30, 30, 50, 0.7);
+    border-color: rgba(124, 119, 255, 0.3);
+}
+
+.power-label {
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.power-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+    min-width: 80px;
+    justify-content: center;
+}
+
+.power-toggle-btn .material-icons {
+    font-size: 18px;
+}
+
+.power-toggle-btn[data-state="off"] {
+    border-color: rgba(220, 53, 69, 0.5);
+    background: rgba(220, 53, 69, 0.1);
+    color: var(--stream-inactive);
+}
+
+.power-toggle-btn[data-state="on"] {
+    background: linear-gradient(135deg, rgba(0, 255, 136, 0.3), rgba(0, 212, 255, 0.3));
+    border-color: var(--stream-active);
+    color: #fff;
+}
+
+.power-toggle-btn[data-state="on"] .material-icons {
+    color: var(--stream-active);
+}
+
+.power-toggle-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(124, 119, 255, 0.3);
+}
+
+.power-toggle-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.power-toggle-btn.loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+/* Refresh Button */
+.btn-refresh {
+    background: linear-gradient(135deg, rgba(124, 119, 255, 0.2), rgba(0, 212, 255, 0.2));
+    border: 1px solid rgba(124, 119, 255, 0.3);
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+}
+
+.btn-refresh:hover {
+    background: linear-gradient(135deg, rgba(124, 119, 255, 0.3), rgba(0, 212, 255, 0.3));
+    border-color: var(--camera-accent);
+    color: var(--text-primary);
+    box-shadow: 0 0 15px rgba(124, 119, 255, 0.3);
+}
+
+.btn-refresh.spinning .material-icons {
+    animation: spin 1s linear;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 992px) {
+    .camera-selector-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 576px) {
+    .camera-selector-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+    }
+
+    .camera-port-btn {
+        padding: 0.75rem 0.5rem;
+    }
+
+    .camera-port-btn .material-icons {
+        font-size: 24px;
+    }
+
+    .camera-port-btn span {
+        font-size: 0.85rem;
+    }
+}

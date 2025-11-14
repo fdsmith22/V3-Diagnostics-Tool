@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+
+{% block title %}Camera Testing - V3 Diagnostics{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<link href="{{ url_for('static', filename='css/camera-page.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="page-title mb-0">
+            <i class="material-icons align-middle me-2">videocam</i>
+            Camera Testing
+        </h3>
+        <button class="btn btn-refresh" id="refresh-camera-status">
+            <i class="material-icons align-middle">refresh</i>
+            <span class="d-none d-sm-inline ms-1">Refresh Status</span>
+        </button>
+    </div>
+
+    <!-- Camera Status Cards -->
+    <div class="row g-3 mb-4">
+        <!-- Connection Status -->
+        <div class="col-12 col-md-4">
+            <div class="status-card-compact">
+                <div class="status-card-icon">
+                    <i class="material-icons">link</i>
+                </div>
+                <div class="status-card-content">
+                    <div class="status-card-title">Device Connection</div>
+                    <div class="connection-indicator" id="camera-connection-status">
+                        <span class="pulse"></span>
+                        <span class="status-text">Checking...</span>
+                    </div>
+                    <div class="status-card-subtitle" id="camera-connection-message">Checking device</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stream Status -->
+        <div class="col-12 col-md-4">
+            <div class="status-card-compact">
+                <div class="status-card-icon">
+                    <i class="material-icons">play_circle</i>
+                </div>
+                <div class="status-card-content">
+                    <div class="status-card-title">Stream Status</div>
+                    <div class="stream-status-display">
+                        <span class="stream-status-text" id="stream-status-text">Inactive</span>
+                    </div>
+                    <div class="status-card-subtitle" id="stream-port-info">No stream active</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Camera -->
+        <div class="col-12 col-md-4">
+            <div class="status-card-compact">
+                <div class="status-card-icon">
+                    <i class="material-icons">camera</i>
+                </div>
+                <div class="status-card-content">
+                    <div class="status-card-title">Active Camera</div>
+                    <div class="active-camera-display">
+                        <span class="active-camera-text" id="active-camera-text">None</span>
+                    </div>
+                    <div class="status-card-subtitle" id="camera-resolution">--</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Camera Controls & Preview -->
+    <div class="row g-4">
+        <!-- Left Column: Controls -->
+        <div class="col-12 col-lg-5">
+            <div class="card camera-controls-card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="material-icons align-middle me-2">settings</i>
+                        Camera Controls
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Camera Port Selection -->
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">
+                            <i class="material-icons align-middle me-1" style="font-size: 18px;">pin</i>
+                            Select Camera Port (0-5)
+                        </label>
+                        <div class="camera-selector-grid">
+                            <button class="camera-port-btn" data-port="0">
+                                <i class="material-icons">videocam</i>
+                                <span>Port 0</span>
+                            </button>
+                            <button class="camera-port-btn" data-port="1">
+                                <i class="material-icons">videocam</i>
+                                <span>Port 1</span>
+                            </button>
+                            <button class="camera-port-btn" data-port="2">
+                                <i class="material-icons">videocam</i>
+                                <span>Port 2</span>
+                            </button>
+                            <button class="camera-port-btn" data-port="3">
+                                <i class="material-icons">videocam</i>
+                                <span>Port 3</span>
+                            </button>
+                            <button class="camera-port-btn" data-port="4">
+                                <i class="material-icons">videocam</i>
+                                <span>Port 4</span>
+                            </button>
+                            <button class="camera-port-btn" data-port="5">
+                                <i class="material-icons">videocam</i>
+                                <span>Port 5</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Stream Controls -->
+                    <div>
+                        <label class="form-label fw-semibold">
+                            <i class="material-icons align-middle me-1" style="font-size: 18px;">control_camera</i>
+                            Stream Controls
+                        </label>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-success btn-lg" id="start-stream-btn" disabled>
+                                <i class="material-icons me-2">play_arrow</i>
+                                Start Stream
+                            </button>
+                            <button class="btn btn-danger btn-lg" id="stop-stream-btn" disabled>
+                                <i class="material-icons me-2">stop</i>
+                                Stop Stream
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stream Information - Positioned Below Controls -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="material-icons align-middle me-2">tune</i>
+                        Stream Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="info-list">
+                        <div class="info-item">
+                            <span class="info-label">Resolution:</span>
+                            <span class="info-value">1280x720</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Framerate:</span>
+                            <span class="info-value">30 FPS</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Format:</span>
+                            <span class="info-value">MJPEG</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Port:</span>
+                            <span class="info-value" id="stream-port-display">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Video Preview -->
+        <div class="col-12 col-lg-7">
+            <div class="card camera-preview-card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="material-icons align-middle me-2">monitor</i>
+                        Live Preview
+                    </h5>
+                    <span class="badge bg-secondary" id="preview-status-badge">No Stream</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="camera-preview-container">
+                        <div class="camera-preview-placeholder" id="camera-placeholder">
+                            <i class="material-icons">videocam_off</i>
+                            <p>Select a camera port and click "Start Stream" to view live feed</p>
+                        </div>
+                        <img id="camera-stream" class="camera-stream-img d-none" alt="Camera Stream">
+                        <div class="stream-overlay d-none" id="stream-loading">
+                            <div class="spinner-border text-light" role="status">
+                                <span class="visually-hidden">Loading stream...</span>
+                            </div>
+                            <p class="mt-2 text-light">Starting camera stream...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted" id="stream-info-footer">Stream: Inactive</small>
+                        <small class="text-muted" id="stream-time-footer">--:--:--</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LED Testing Controls - Moved Below Stream -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="material-icons align-middle me-2">lightbulb</i>
+                        Detection LED Testing
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <small class="d-block text-muted mb-3">Test hardware LEDs for each camera port</small>
+                    <div class="led-test-grid">
+                            <div class="led-test-item" data-port="0">
+                                <span class="led-port-label">Port 0</span>
+                                <div class="led-toggle-wrapper">
+                                    <button class="btn btn-sm btn-outline-secondary led-toggle-btn" data-port="0" data-state="off">
+                                        <i class="material-icons">lightbulb_outline</i>
+                                        <span class="btn-text">OFF</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="led-test-item" data-port="1">
+                                <span class="led-port-label">Port 1</span>
+                                <div class="led-toggle-wrapper">
+                                    <button class="btn btn-sm btn-outline-secondary led-toggle-btn" data-port="1" data-state="off">
+                                        <i class="material-icons">lightbulb_outline</i>
+                                        <span class="btn-text">OFF</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="led-test-item" data-port="2">
+                                <span class="led-port-label">Port 2</span>
+                                <div class="led-toggle-wrapper">
+                                    <button class="btn btn-sm btn-outline-secondary led-toggle-btn" data-port="2" data-state="off">
+                                        <i class="material-icons">lightbulb_outline</i>
+                                        <span class="btn-text">OFF</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="led-test-item" data-port="3">
+                                <span class="led-port-label">Port 3</span>
+                                <div class="led-toggle-wrapper">
+                                    <button class="btn btn-sm btn-outline-secondary led-toggle-btn" data-port="3" data-state="off">
+                                        <i class="material-icons">lightbulb_outline</i>
+                                        <span class="btn-text">OFF</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="led-test-item" data-port="4">
+                                <span class="led-port-label">Port 4</span>
+                                <div class="led-toggle-wrapper">
+                                    <button class="btn btn-sm btn-outline-secondary led-toggle-btn" data-port="4" data-state="off">
+                                        <i class="material-icons">lightbulb_outline</i>
+                                        <span class="btn-text">OFF</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="led-test-item" data-port="5">
+                                <span class="led-port-label">Port 5</span>
+                                <div class="led-toggle-wrapper">
+                                    <button class="btn btn-sm btn-outline-secondary led-toggle-btn" data-port="5" data-state="off">
+                                        <i class="material-icons">lightbulb_outline</i>
+                                        <span class="btn-text">OFF</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Camera Detection Log -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="material-icons align-middle me-2">assignment</i>
+                Camera Detection Log
+            </h5>
+        </div>
+        <div class="card-body">
+            <div id="camera-detection-log">
+                <div class="text-center text-muted py-3">
+                    <i class="material-icons mb-2" style="font-size: 48px; opacity: 0.3;">camera_enhance</i>
+                    <p>Click "Refresh Status" to detect available cameras</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/camera.js') }}"></script>
+{% endblock %}

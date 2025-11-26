@@ -27,13 +27,12 @@ if ! command -v python3 &> /dev/null; then
     sudo apt-get update -qq
     sudo apt-get install -y python3 python3-pip python3-venv
 else
-    # Ensure python3-venv is installed even if python3 exists
-    if ! python3 -m venv --help &> /dev/null; then
-        echo "  Installing python3-venv..."
-        sudo apt-get install -y python3-venv
-    else
-        echo "  Python 3 + venv: OK"
-    fi
+    # Get Python version and install matching venv package
+    PYTHON_VERSION=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
+    echo "  Python $PYTHON_VERSION detected"
+    echo "  Ensuring python${PYTHON_VERSION}-venv is installed..."
+    sudo apt-get update -qq
+    sudo apt-get install -y python${PYTHON_VERSION}-venv python3-pip
 fi
 
 # Check for Git

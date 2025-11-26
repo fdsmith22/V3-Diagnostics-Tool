@@ -77,14 +77,11 @@ if [ -d "$HOME/bin" ]; then
     echo "Created command 'v3-diagnostics' in ~/bin"
 fi
 
-# Also create a system-wide link (optional)
+# Create system-wide link automatically (no prompt needed for curl | bash)
 echo ""
-read -p "Create system-wide command 'v3-diagnostics'? (requires sudo) [y/N]: " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-    sudo ln -sf "$LAUNCHER_DEST" /usr/local/bin/v3-diagnostics
-    echo "Created system-wide command 'v3-diagnostics'"
-fi
+echo "Creating system-wide command..."
+sudo ln -sf "$LAUNCHER_DEST" /usr/local/bin/v3-diagnostics
+echo "Created system-wide command 'v3-diagnostics'"
 
 echo ""
 echo "======================================"
@@ -101,9 +98,5 @@ echo ""
 echo "First launch will clone the repository and set up the environment."
 echo "This may take a few minutes."
 echo ""
-read -p "Would you like to launch V3 Diagnostics Tool now? [Y/n]: " -n 1 -r
-echo
-if [[ ! $REPLY =~ ^[Nn]$ ]]; then
-    echo "Launching V3 Diagnostics Tool..."
-    exec "$LAUNCHER_DEST"
-fi
+echo "To start, run: v3-diagnostics"
+echo ""

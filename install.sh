@@ -1,59 +1,74 @@
 #!/bin/bash
-# V3 Diagnostics Tool One-Time Installer for Ubuntu
+# V3 Diagnostics Tool Installer for Ubuntu
+# Safe to run multiple times - will update/fix existing installation
 
 set -e
+
+LAUNCHER_DEST="$HOME/v3-diagnostics-launcher.sh"
+APP_DIR="$HOME/.v3-diagnostics-tool"
 
 echo "======================================"
 echo "V3 Diagnostics Tool Installer"
 echo "======================================"
 echo ""
 
+# Check if this is a reinstall/update
+if [ -f "$LAUNCHER_DEST" ] || [ -d "$APP_DIR" ]; then
+    echo "Existing installation detected - updating..."
+    echo ""
+fi
+
 # Check for required system packages
 echo "Checking system dependencies..."
 
-# Check for Python 3
+# Check for Python 3 and venv
 if ! command -v python3 &> /dev/null; then
-    echo "Python 3 not found. Installing..."
-    sudo apt-get update
+    echo "  Installing Python 3..."
+    sudo apt-get update -qq
     sudo apt-get install -y python3 python3-pip python3-venv
+else
+    # Ensure python3-venv is installed even if python3 exists
+    if ! python3 -m venv --help &> /dev/null; then
+        echo "  Installing python3-venv..."
+        sudo apt-get install -y python3-venv
+    else
+        echo "  Python 3 + venv: OK"
+    fi
 fi
 
 # Check for Git
 if ! command -v git &> /dev/null; then
-    echo "Git not found. Installing..."
+    echo "  Installing Git..."
     sudo apt-get install -y git
-fi
-
-# Check for Node.js
-if ! command -v node &> /dev/null; then
-    echo "Node.js not found. Installing..."
-    curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
-    sudo apt-get install -y nodejs
+else
+    echo "  Git: OK"
 fi
 
 # Check for sshpass
 if ! command -v sshpass &> /dev/null; then
-    echo "sshpass not found. Installing..."
+    echo "  Installing sshpass..."
     sudo apt-get install -y sshpass
+else
+    echo "  sshpass: OK"
 fi
 
-# Check for ttyd (optional but recommended)
+# Check for ttyd
 if ! command -v ttyd &> /dev/null; then
-    echo "ttyd not found. Installing..."
+    echo "  Installing ttyd..."
     sudo apt-get install -y ttyd
+else
+    echo "  ttyd: OK"
 fi
 
-# Download the launcher script
+# Download/update the launcher script
 echo ""
-echo "Downloading launcher..."
+echo "Downloading latest launcher..."
 LAUNCHER_URL="https://raw.githubusercontent.com/vivacitylabs/V3-Diagnostics-Tool/main/launcher.sh"
-LAUNCHER_DEST="$HOME/v3-diagnostics-launcher.sh"
-
 curl -fsSL "$LAUNCHER_URL" -o "$LAUNCHER_DEST"
 chmod +x "$LAUNCHER_DEST"
 
-# Create desktop entry for easy access
-echo "Creating desktop shortcut..."
+# Create desktop entry
+echo "Setting up desktop shortcut..."
 DESKTOP_FILE="$HOME/.local/share/applications/v3-diagnostics.desktop"
 mkdir -p "$HOME/.local/share/applications"
 
@@ -71,32 +86,25 @@ EOF
 
 chmod +x "$DESKTOP_FILE"
 
-# Create a symlink in user's bin directory if it exists
+# Create symlinks
 if [ -d "$HOME/bin" ]; then
     ln -sf "$LAUNCHER_DEST" "$HOME/bin/v3-diagnostics"
-    echo "Created command 'v3-diagnostics' in ~/bin"
 fi
 
-# Create system-wide link automatically (no prompt needed for curl | bash)
-echo ""
-echo "Creating system-wide command..."
+echo "Setting up system command..."
 sudo ln -sf "$LAUNCHER_DEST" /usr/local/bin/v3-diagnostics
-echo "Created system-wide command 'v3-diagnostics'"
+
+# Fix broken venv if exists
+if [ -d "$APP_DIR" ] && [ ! -f "$APP_DIR/venv/bin/activate" ]; then
+    echo ""
+    echo "Fixing broken Python environment..."
+    rm -rf "$APP_DIR/venv"
+fi
 
 echo ""
 echo "======================================"
 echo "Installation Complete!"
 echo "======================================"
 echo ""
-echo "To run V3 Diagnostics Tool, use one of these methods:"
-echo "  1. Type 'v3-diagnostics' in terminal"
-echo "  2. Run: $LAUNCHER_DEST"
-echo "  3. Find 'V3 Diagnostics Tool' in your applications menu"
-echo ""
-echo "The tool will auto-update from GitHub on each launch."
-echo ""
-echo "First launch will clone the repository and set up the environment."
-echo "This may take a few minutes."
-echo ""
-echo "To start, run: v3-diagnostics"
+echo "Run 'v3-diagnostics' to start the tool."
 echo ""

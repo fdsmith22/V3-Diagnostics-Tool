@@ -38,20 +38,32 @@ fi
 cd "$APP_DIR"
 
 # Setup Python environment if needed
-if [ ! -d "$VENV_DIR" ]; then
+if [ ! -d "$VENV_DIR" ] || [ ! -f "$VENV_DIR/bin/activate" ]; then
     echo "Setting up Python environment..."
+    rm -rf "$VENV_DIR" 2>/dev/null
     python3 -m venv "$VENV_DIR"
+    if [ $? -ne 0 ]; then
+        echo ""
+        echo "ERROR: Failed to create virtual environment."
+        echo "Please run: sudo apt install python3-venv python3-pip"
+        echo "Then try again."
+        exit 1
+    fi
     UPDATE_DEPS=true
 fi
 
 # Activate virtual environment
 source "$VENV_DIR/bin/activate"
+if [ $? -ne 0 ]; then
+    echo "ERROR: Failed to activate virtual environment."
+    exit 1
+fi
 
 # Always sync dependencies after update to catch any added/removed packages
 if [ "$UPDATE_DEPS" = true ]; then
     echo "Syncing dependencies..."
     pip install --upgrade pip -q
-    pip install -r requirements.txt --upgrade -q
+    pip install -r requirements.txt -q
     echo "Dependencies updated!"
 fi
 
@@ -86,7 +98,7 @@ pkill -f "python.*app.py" 2>/dev/null
 
 # Start Flask app
 echo "Starting V3 Diagnostics Tool..."
-python app.py &
+python3 app.py &
 FLASK_PID=$!
 
 # Wait for Flask to start

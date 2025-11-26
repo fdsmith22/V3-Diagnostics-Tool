@@ -14,6 +14,13 @@ A comprehensive web-based diagnostic interface for V3 sensor modules with integr
 - **Thermal Monitoring** - Multi-zone temperature sensors with real-time updates
 - **Log Analysis** - Condensed error logs and system messages
 
+### Camera Testing
+- **Live Camera Streaming** - MJPEG stream from any camera port (0-5) via GStreamer
+- **Camera Detection** - Auto-detect available IMX462/IMX662 cameras on CSI ports
+- **Detection LED Testing** - Toggle detection LEDs for each camera port
+- **ANPR IR LED Control** - Toggle IR illumination LEDs (IR_LED1/IR_LED2) for ANPR cameras
+- **Stream Information** - Real-time stream status, resolution, and elapsed time
+
 ### Terminal Features
 - **Integrated Web Terminal** - Native SSH terminal via ttyd
 - **Multiple Terminal Tabs** - Up to 5 simultaneous terminal sessions with independent SSH connections (ports 7682-7686)
@@ -185,6 +192,14 @@ Access the application at: `http://localhost:5000`
 - `POST /api/terminal/start/<tab_id>` - Start terminal server for specific tab (tabs 1-5, ports 7682-7686)
 - `POST /api/terminal/stop` - Stop terminal server
 - `POST /api/terminal/stop/<tab_id>` - Stop terminal server for specific tab
+
+### Camera
+- `POST /api/camera/start` - Start camera stream on specified port
+- `POST /api/camera/stop` - Stop camera stream
+- `GET /api/camera/stream/<port>` - MJPEG stream endpoint
+- `GET /api/camera/detect` - Detect available cameras
+- `POST /api/camera/led/toggle` - Toggle detection LED for camera port
+- `POST /api/camera/ir-led/toggle` - Toggle ANPR IR LED (IR_LED1/IR_LED2)
 
 ## Security Notes
 

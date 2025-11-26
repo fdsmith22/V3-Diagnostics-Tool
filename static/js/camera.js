@@ -40,7 +40,10 @@
         ledToggleBtns: document.querySelectorAll('.led-toggle-btn'),
 
         // Power toggle buttons
-        powerToggleBtns: document.querySelectorAll('.power-toggle-btn')
+        powerToggleBtns: document.querySelectorAll('.power-toggle-btn'),
+
+        // IR LED toggle buttons
+        irLedToggleBtns: document.querySelectorAll('.ir-led-toggle-btn')
     };
 
     // Initialize on page load
@@ -94,6 +97,11 @@
         // Power toggle buttons
         elements.powerToggleBtns.forEach(btn => {
             btn.addEventListener('click', () => togglePower(btn));
+        });
+
+        // IR LED toggle buttons
+        elements.irLedToggleBtns.forEach(btn => {
+            btn.addEventListener('click', () => toggleIRLED(btn));
         });
     }
 
@@ -404,6 +412,76 @@
         } catch (error) {
             console.error('Error toggling power switch:', error);
             alert(`Failed to toggle power switch: ${error.message}`);
+
+            // Restore original text on error
+            btn.querySelector('.btn-text').textContent = originalText;
+        } finally {
+            // Re-enable button and remove loading state
+            btn.disabled = false;
+            btn.classList.remove('loading');
+        }
+    }
+
+    async function toggleIRLED(btn) {
+        // Get LED number from button data attribute
+        const ledNumber = parseInt(btn.dataset.led);
+
+        // Get current state (off or on)
+        const currentState = btn.dataset.state;
+        const newState = currentState === 'off' ? 'on' : 'off';
+
+        // Check if device is connected
+        if (!state.deviceConnected) {
+            alert('Device not connected. Please check the connection.');
+            return;
+        }
+
+        // Disable button and add loading state
+        btn.disabled = true;
+        btn.classList.add('loading');
+
+        const originalText = btn.querySelector('.btn-text').textContent;
+        btn.querySelector('.btn-text').textContent = '...';
+
+        try {
+            console.log(`Toggling IR LED ${ledNumber} to ${newState}`);
+
+            // Call backend API to toggle IR LED
+            const response = await fetch('/api/camera/ir-led/toggle', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    led: ledNumber,
+                    state: newState
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.status === 'success') {
+                // Update button state
+                btn.dataset.state = newState;
+
+                // Update button appearance
+                if (newState === 'on') {
+                    btn.querySelector('.btn-text').textContent = 'ON';
+                    btn.classList.remove('btn-outline-secondary');
+                    btn.classList.add('btn-outline-success');
+                } else {
+                    btn.querySelector('.btn-text').textContent = 'OFF';
+                    btn.classList.remove('btn-outline-success');
+                    btn.classList.add('btn-outline-secondary');
+                }
+
+                console.log(`IR LED ${data.led_name} toggled to ${newState} successfully`);
+            } else {
+                throw new Error(data.message || 'Failed to toggle IR LED');
+            }
+        } catch (error) {
+            console.error('Error toggling IR LED:', error);
+            alert(`Failed to toggle IR LED: ${error.message}`);
 
             // Restore original text on error
             btn.querySelector('.btn-text').textContent = originalText;

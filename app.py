@@ -1149,6 +1149,64 @@ def toggle_detection_led():
             'message': f'Failed to toggle LED: {str(e)}'
         }), 500
 
+@app.route('/api/camera/ir-led/toggle', methods=['POST'])
+@limiter.limit("60 per minute")
+def toggle_ir_led():
+    """Toggle IR LED for ANPR cameras via hwman API"""
+    from utils.ssh_interface import run_ssh_command
+
+    try:
+        data = request.get_json()
+        led_number = data.get('led')  # 1 or 2
+        state = data.get('state', 'on').lower()
+
+        # Validate LED number
+        if led_number not in [1, 2]:
+            return jsonify({
+                'status': 'error',
+                'message': 'Invalid LED number. Must be 1 or 2.'
+            }), 400
+
+        # Validate state
+        if state not in ['on', 'off']:
+            return jsonify({
+                'status': 'error',
+                'message': 'Invalid state. Must be "on" or "off".'
+            }), 400
+
+        led_name = f"IR_LED{led_number}"
+
+        logger.info(f"Toggling {led_name} to {state}")
+
+        # Execute hwman API command via curl
+        curl_cmd = f"curl -s -X POST http://localhost:2000/switch/{led_name}/{state}"
+        result = run_ssh_command(curl_cmd, timeout=10)
+
+        # Check if command executed successfully
+        if result.startswith("Error:"):
+            logger.error(f"IR LED toggle failed: {result}")
+            return jsonify({
+                'status': 'error',
+                'message': f'Failed to toggle IR LED: {result}'
+            }), 500
+
+        logger.info(f"IR LED toggle successful: {led_name} -> {state}")
+        return jsonify({
+            'status': 'success',
+            'message': f'{led_name} turned {state}',
+            'led': led_number,
+            'led_name': led_name,
+            'state': state,
+            'response': result
+        })
+
+    except Exception as e:
+        logger.error(f"Error toggling IR LED: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Failed to toggle IR LED: {str(e)}'
+        }), 500
+
 @app.route('/api/hardware/power/toggle', methods=['POST'])
 @limiter.limit("60 per minute")
 def toggle_power_switch():

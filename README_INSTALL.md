@@ -5,13 +5,13 @@
 For users without Git access, run this single command in your terminal:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/fdsmith22/V3-Diagnostics-Tool/main/quick-install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/vivacitylabs/V3-Diagnostics-Tool/main/quick-install.sh | bash
 ```
 
 Or if you prefer wget:
 
 ```bash
-wget -qO- https://raw.githubusercontent.com/fdsmith22/V3-Diagnostics-Tool/main/quick-install.sh | bash
+wget -qO- https://raw.githubusercontent.com/vivacitylabs/V3-Diagnostics-Tool/main/quick-install.sh | bash
 ```
 
 ## What This Does
@@ -124,4 +124,4 @@ rm -f ~/.local/share/applications/v3-diagnostics.desktop
 ## Support
 
 For issues or questions, please check the project repository:
-https://github.com/fdsmith22/V3-Diagnostics-Tool
+https://github.com/vivacitylabs/V3-Diagnostics-Tool

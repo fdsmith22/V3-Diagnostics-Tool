@@ -36,7 +36,7 @@ fi
 # Clone repository if needed
 if [ ! -d "$INSTALL_DIR" ]; then
     echo -e "${GREEN}Step 1: Cloning repository...${NC}"
-    git clone https://github.com/fdsmith22/V3-Diagnostics-Tool.git "$INSTALL_DIR"
+    git clone https://github.com/vivacitylabs/V3-Diagnostics-Tool.git "$INSTALL_DIR"
     cd "$INSTALL_DIR"
 else
     cd "$INSTALL_DIR"

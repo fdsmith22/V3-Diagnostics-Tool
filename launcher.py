@@ -12,7 +12,7 @@ import webbrowser
 from pathlib import Path
 import shutil
 
-REPO_URL = "https://github.com/fdsmith22/V3-Diagnostics-Tool.git"
+REPO_URL = "https://github.com/vivacitylabs/V3-Diagnostics-Tool.git"
 APP_NAME = "V3 Diagnostics Tool"
 APP_DIR = Path.home() / ".v3-diagnostics-tool"
 VENV_DIR = APP_DIR / "venv"

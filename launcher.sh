@@ -2,8 +2,8 @@
 # V3 Diagnostics Tool Auto-Update Launcher
 
 # Try SSH first, fallback to HTTPS if it fails
-REPO_SSH="git@github.com:fdsmith22/V3-Diagnostics-Tool.git"
-REPO_HTTPS="https://github.com/fdsmith22/V3-Diagnostics-Tool.git"
+REPO_SSH="git@github.com:vivacitylabs/V3-Diagnostics-Tool.git"
+REPO_HTTPS="https://github.com/vivacitylabs/V3-Diagnostics-Tool.git"
 REPO_URL="$REPO_SSH"
 APP_DIR="$HOME/.v3-diagnostics-tool"
 VENV_DIR="$APP_DIR/venv"
@@ -47,21 +47,38 @@ fi
 # Activate virtual environment
 source "$VENV_DIR/bin/activate"
 
-# Update dependencies if needed
+# Always sync dependencies after update to catch any added/removed packages
 if [ "$UPDATE_DEPS" = true ]; then
-    echo "Installing/updating dependencies..."
-    pip install -r requirements.txt
-    npm install
+    echo "Syncing dependencies..."
+    pip install --upgrade pip -q
+    pip install -r requirements.txt --upgrade -q
+    echo "Dependencies updated!"
 fi
 
-# Check for .env file
+# Check for .env file and create if needed
 if [ ! -f "$APP_DIR/.env" ]; then
     echo ""
-    echo "WARNING: No .env file found!"
-    echo "Please create $APP_DIR/.env with your SSH credentials"
-    echo "Copy from .env.template for reference"
+    echo "============================================"
+    echo "  First-time Setup: Device Configuration"
+    echo "============================================"
     echo ""
-    read -p "Press enter to continue anyway..."
+    read -p "SSH Username [ubuntu]: " SSH_USER
+    SSH_USER=${SSH_USER:-ubuntu}
+
+    read -p "Device IP Address [192.168.55.1]: " SSH_IP
+    SSH_IP=${SSH_IP:-192.168.55.1}
+
+    read -sp "SSH Password: " SSH_PASSWORD
+    echo ""
+
+    cat > "$APP_DIR/.env" << EOF
+SSH_USER=$SSH_USER
+SSH_IP=$SSH_IP
+SSH_PASSWORD=$SSH_PASSWORD
+SUDO_PASSWORD=$SSH_PASSWORD
+EOF
+    echo "Configuration saved!"
+    echo ""
 fi
 
 # Kill any existing Flask instances

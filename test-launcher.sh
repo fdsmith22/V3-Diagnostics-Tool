@@ -1,7 +1,7 @@
 #!/bin/bash
 # TEST VERSION - Uses a different directory to avoid conflicts
 
-REPO_URL="git@github.com:fdsmith22/V3-Diagnostics-Tool.git"
+REPO_URL="git@github.com:vivacitylabs/V3-Diagnostics-Tool.git"
 APP_DIR="$HOME/.v3-diagnostics-tool-TEST"  # Different directory for testing
 VENV_DIR="$APP_DIR/venv"
 

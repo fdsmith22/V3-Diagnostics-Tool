@@ -53,7 +53,7 @@ A comprehensive web-based diagnostic interface for V3 sensor modules with integr
 For colleagues who want automatic updates, run this one-line installer:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/fdsmith22/V3-Diagnostics-Tool/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/vivacitylabs/V3-Diagnostics-Tool/main/install.sh | bash
 ```
 
 This will:
@@ -69,7 +69,7 @@ After installation, simply run `v3-diagnostics` from anywhere.
 For development or manual setup:
 
 ```bash
-git clone https://github.com/fdsmith22/V3-Diagnostics-Tool.git
+git clone https://github.com/vivacitylabs/V3-Diagnostics-Tool.git
 cd V3-Diagnostics-Tool
 ```
 

@@ -46,7 +46,7 @@ fi
 # Download the launcher script
 echo ""
 echo "Downloading launcher..."
-LAUNCHER_URL="https://raw.githubusercontent.com/fdsmith22/V3-Diagnostics-Tool/main/launcher.sh"
+LAUNCHER_URL="https://raw.githubusercontent.com/vivacitylabs/V3-Diagnostics-Tool/main/launcher.sh"
 LAUNCHER_DEST="$HOME/v3-diagnostics-launcher.sh"
 
 curl -fsSL "$LAUNCHER_URL" -o "$LAUNCHER_DEST"
